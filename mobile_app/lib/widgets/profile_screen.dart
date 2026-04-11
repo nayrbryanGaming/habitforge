@@ -55,8 +55,41 @@ class ProfileScreen extends ConsumerWidget {
                     ref.read(authNotifierProvider.notifier).signOut();
                   },
                 ),
+                const Divider(),
+                ListTile(
+                  leading: const Icon(Icons.delete_forever, color: AppColors.error),
+                  title: const Text('Delete Account', style: TextStyle(color: AppColors.error)),
+                  subtitle: const Text('Permanently remove your data'),
+                  onTap: () => _showDeleteConfirmation(context, ref),
+                ),
               ],
             ),
+    );
+  }
+
+  void _showDeleteConfirmation(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Account?'),
+        content: const Text(
+          'This action is permanent and will delete all your habits, streaks, and progress records. This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ref.read(authServiceProvider).deleteAccount();
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            child: const Text('Delete Permanently'),
+          ),
+        ],
+      ),
     );
   }
 }

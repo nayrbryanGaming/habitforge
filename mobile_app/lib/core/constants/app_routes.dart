@@ -15,4 +15,5 @@ class AppRoutes {
   static const String settings = '/settings';
   static const String premium = '/premium';
   static const String notifications = '/notifications';
+  static const String about = '/about';
 }

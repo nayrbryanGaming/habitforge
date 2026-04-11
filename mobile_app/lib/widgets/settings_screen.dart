@@ -13,6 +13,14 @@ class SettingsScreen extends StatelessWidget {
             title: Text('App Version'),
             subtitle: Text('1.0.0'),
           ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.info_outline),
+            title: const Text('About HabitForge'),
+            subtitle: const Text('Legal, Privacy, and Disclaimers'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.about),
+          ),
         ],
       ),
     );

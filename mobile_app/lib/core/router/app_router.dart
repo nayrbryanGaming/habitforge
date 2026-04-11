@@ -18,6 +18,7 @@ import '../widgets/main_shell.dart';
 import '../widgets/profile_screen.dart';
 import '../widgets/premium_screen.dart';
 import '../widgets/settings_screen.dart';
+import '../widgets/about_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
@@ -111,6 +112,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.notifications,
         builder: (context, state) => const NotificationsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.about,
+        builder: (context, state) => const AboutScreen(),
       ),
     ],
   );
