@@ -1,0 +1,10 @@
+# AI IMAGE GENERATION PROMPT
+
+To generate the perfect logo for HabitForge, use this prompt in Midjourney or DALL-E 3:
+
+```text
+A minimal, modern app icon logo for a habit tracking app called "HabitForge". 
+The design should feature a clean, stylized blacksmith hammer striking an anvil, but the shape of the metal being forged is a glowing bright orange checkmark. 
+The background should be a solid, deep trust blue (#2563EB). 
+The aesthetic is energetic, sleek, vector-style, no text, UI design flat icon style, highly polished, suitable for iOS and Android app stores.
+```
