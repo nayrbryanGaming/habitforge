@@ -1,77 +1,76 @@
-# HabitForge: Forge powerful habits one day at a time.
+# HabitForge 🔨
+### Forge powerful habits one day at a time.
 
-<p align="center">
-  <img src="assets/logo/logo-placeholder.png" alt="HabitForge Logo" width="150" />
-</p>
+[![Flutter Version](https://img.shields.io/badge/Flutter-3.25.0-blue.svg)](https://flutter.dev)
+[![Submission](https://img.shields.io/badge/Submission-8th%20Attempt-orange.svg)](docs/submission_history.md)
+[![Aesthetics](https://img.shields.io/badge/UI%2FUX-Premium-emerald.svg)](#)
 
-## 🚀 Product Description
-HabitForge is a modern habit tracking mobile application designed to help users build consistent daily routines through behavioral psychology, streak tracking, smart reminders, and visual progress analytics. 
+HabitForge is a high-performance habit tracking application engineered for consistency. It leverages behavioral psychology, loss-aversion mechanics (streaks), and high-fidelity data visualization to help users transform their routines into their identity.
 
-While most habit trackers suffer from overly complex UIs or lack of analytics, HabitForge simplifies the experience while providing deep behavioral insights and streak-based motivation systems.
+---
 
-## 🎯 Target Market
-- Students
-- Remote Workers
-- Productivity Enthusiasts
-- Startup Founders
-- Self-Improvement Community (Ages: 18-40)
+## 🚀 Product Strategy (8th Attempt Overhaul)
 
-## ✨ Core Features
-- **Habit Creation:** Create daily or weekly routines easily.
-- **Habit Tracking:** Effortless one-tap completion logs.
-- **Streak System:** Visual streak counters leveraging loss-aversion psychology.
-- **Smart Reminders:** Hyper-local push notifications via FCM.
-- **Analytics Dashboard:** Weekly/Monthly charts computing completion rates automatically.
-- **Freemium Model:** 5 free habits. Premium unlocks unlimited tracking.
+We have rebuilt the core user experience to meet the highest Google Play standards. The "8th Attempt" focuses on **Visual Dopamine** and **Legal Sovereignty**:
+- **Forging Engine**: Micro-animations (shake/scale) on completion for immediate reinforcement.
+- **Glassmorphic UI**: A modern, clean aesthetic using the `#F8FAFC` slate palette.
+- **Data Sovereignty**: Implemented mandatory Play Store "Delete Account" flows with cascading Firestore deletion.
+- **Legal Hub**: Centralized compliance for Privacy, Terms, and Medical Disclaimers.
 
-## 🛠 Tech Stack
-- **Frontend:** Flutter (Dart), Riverpod (State Management)
-- **Backend:** Firebase (Auth, Firestore DB, Cloud Functions)
-- **Landing Page:** Next.js, Tailwind CSS
-- **Deployment:** Android Play Store / iOS App Store target.
+---
 
-## 📂 Project Architecture
-We utilize a Feature-Based Modular Architecture for the Flutter app.
+## ✨ Core Feature Set
 
-```
+- **Forging Engine**: Create and manage daily/weekly habits with custom icons and colors.
+- **Consistency Heatmap**: A detailed 30-day grid visualizing your discipline.
+- **Analytics Dashboard**: Comprehensive breakdown of completion rates, active fire (streaks), and historical bests.
+- **Smart Reminders**: Precision-timed notifications to ensure a habit is never missed.
+- **Premium Tier**: Unlocks unlimited forging and advanced behavior insights.
+
+---
+
+## 🛠 Tech Stack & Architecture
+
+### Mobile App (Flutter)
+- **State Management**: Riverpod (Domain-driven providers)
+- **Local Cache**: Hive & SharedPreferences
+- **Animations**: `flutter_animate`, `Lottie`
+- **Charts**: `fl_chart`
+- **Routing**: `go_router` (Declarative navigation)
+
+### Backend (Firebase)
+- **Auth**: Firebase Authentication (Email/Password & Social)
+- **Database**: Cloud Firestore (Real-time sync)
+- **Logic**: Node.js Cloud Functions (Recursive data purging on user delete)
+- **Messaging**: Firebase Cloud Messaging (FCM)
+
+---
+
+## 📂 Project Structure
+
+```text
 habitforge/
-├── mobile_app/         # Flutter application
-│   ├── lib/core/       # App-wide constants, themes, layout wrappers
-│   ├── lib/features/   # Feature modules (Auth, Habit tracking, Analytics)
-│   ├── lib/models/     # Data shape modeling (Habit, Log, User, Analytics)
-│   └── lib/widgets/    # Reusable UI components
-├── backend/            # Firebase Cloud Functions (Node.js)
-├── landing_page/       # Next.js web presence
-├── legal/              # Google Play compliant legal documents
-└── docs/               # Technical specs and strategy
+├── mobile_app/           # Production-ready Flutter Application
+│   ├── lib/core/         # Layouts, Themes, Constants, Global Services
+│   ├── lib/features/     # Modular features (Auth, Habits, Analytics)
+│   ├── lib/models/       # Type-safe Data Models (JSON Serialized)
+│   └── lib/widgets/      # Reusable UI Atoms and Molecules
+├── backend/              # Firebase Infrastructure
+│   └── functions/        # Node.js purgers and auth triggers
+├── landing_page/         # Modern Next.js 15 presence (Vercel)
+├── legal/                # Google Play Compliant Legal Documentation
+└── assets/               # Branding, Logo, and Animation files
 ```
 
-## ⚙️ Installation Guide
+---
 
-### Prerequisites
-- Flutter SDK (v3.25.0+)
-- Node.js (v18+)
-- Firebase CLI (`npm install -g firebase-tools`)
+## 💰 Monetization & Growth
+HabitForge utilizes a **Freemium Model ($4.99/mo)**.
+- **Free**: Up to 5 habits, basic streaks.
+- **Premium**: Unlimited forging, historical heatmaps, and priority cloud sync.
 
-### Mobile App Setup
-1. `cd mobile_app`
-2. `flutter pub get`
-3. Setup Firebase using FlutterFire CLI: `flutterfire configure`
-4. `flutter run`
+---
 
-### Landing Page Setup
-1. `cd landing_page`
-2. `npm install`
-3. `npm run dev`
-
-### Backend Setup
-1. `cd backend/functions`
-2. `npm install`
-3. `firebase deploy --only functions`
-
-## 💰 Monetization Strategy
-**Freemium Model ($4.99/month)**
-Free tier acts as a powerful acquisition funnel with a 5 habit cap. The premium tier unlocks unlimited habits, deep historical analytics, and priority support.
-
-## 🛡 License
-Proprietary / Commercial. All rights reserved.
+## 🛡 License & Compliance
+**Proprietary Commercial Software.** All rights reserved.
+HabitForge is fully compliant with Google Play Data Safety and User Data policies, including mandatory account deletion and transparent legal hub.

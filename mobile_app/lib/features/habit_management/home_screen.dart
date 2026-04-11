@@ -127,78 +127,103 @@ class HomeScreen extends ConsumerWidget {
                         final habitColor = Color(int.parse(item.habit.color.replaceFirst('#', '0xFF')));
 
                         return Card(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                          margin: const EdgeInsets.only(bottom: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                            side: BorderSide(
+                              color: item.completed ? AppColors.success.withOpacity(0.2) : Colors.transparent,
+                              width: 2,
+                            ),
+                          ),
                           elevation: 0,
-                          color: item.completed ? Colors.white.withOpacity(0.5) : Colors.white,
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                          color: item.completed ? Colors.white : Colors.white.withOpacity(0.9),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(24),
                             onTap: () => context.push('/habit/${item.habit.habitId}'),
-                            leading: Container(
-                              width: 50,
-                              height: 50,
-                              decoration: BoxDecoration(
-                                color: item.completed ? AppColors.successLight : habitColor.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(15),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  item.habit.icon,
-                                  style: const TextStyle(fontSize: 24),
-                                ),
-                              ),
-                            ),
-                            title: Text(
-                              item.habit.title,
-                              style: TextStyle(
-                                decoration: item.completed ? TextDecoration.lineThrough : null,
-                                color: item.completed ? AppColors.textSecondary : null,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                            subtitle: Padding(
-                              padding: const EdgeInsets.only(top: 4),
-                              child: item.habit.currentStreak > 0
-                                  ? Row(
+                            child: Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 56,
+                                    height: 56,
+                                    decoration: BoxDecoration(
+                                      color: item.completed ? AppColors.success.withOpacity(0.1) : habitColor.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        item.habit.icon,
+                                        style: const TextStyle(fontSize: 28),
+                                      ),
+                                    ),
+                                  ).animate(target: item.completed ? 1 : 0).scale(duration: 300.ms, curve: Curves.backOut),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        const Icon(Icons.local_fire_department, size: 16, color: AppColors.streakFire),
-                                        const SizedBox(width: 4),
                                         Text(
-                                          '${item.habit.currentStreak} day streak',
-                                          style: const TextStyle(
-                                            color: AppColors.streakFire,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w600,
+                                          item.habit.title,
+                                          style: TextStyle(
+                                            decoration: item.completed ? TextDecoration.lineThrough : null,
+                                            color: item.completed ? AppColors.textSecondary : AppColors.textPrimary,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 17,
                                           ),
                                         ),
+                                        const SizedBox(height: 4),
+                                        item.habit.currentStreak > 0
+                                            ? Row(
+                                                children: [
+                                                  const Icon(Icons.local_fire_department, size: 14, color: AppColors.streakFire),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    '${item.habit.currentStreak} DAY STREAK',
+                                                    style: const TextStyle(
+                                                      color: AppColors.streakFire,
+                                                      fontSize: 10,
+                                                      fontWeight: FontWeight.w900,
+                                                      letterSpacing: 0.5,
+                                                    ),
+                                                  ),
+                                                ],
+                                              )
+                                            : Text(
+                                                'FORGE TODAY',
+                                                style: TextStyle(color: AppColors.textSecondary, fontSize: 10, fontWeight: FontWeight.bold),
+                                              ),
                                       ],
-                                    )
-                                  : Text(
-                                      'Forge a new streak today!',
-                                      style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
                                     ),
-                            ),
-                            trailing: Transform.scale(
-                              scale: 1.2,
-                              child: Checkbox(
-                                value: item.completed,
-                                activeColor: AppColors.success,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                                onChanged: (val) {
-                                  if (val != null) {
-                                    ref.read(habitNotifierProvider.notifier).toggleHabitCompletion(
-                                          habitId: item.habit.habitId,
-                                          userId: user.uid,
-                                          date: DateTime.now(),
-                                          completed: val,
-                                        );
-                                  }
-                                },
+                                  ),
+                                  Transform.scale(
+                                    scale: 1.3,
+                                    child: Checkbox(
+                                      value: item.completed,
+                                      activeColor: AppColors.success,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                      onChanged: (val) {
+                                        if (val != null) {
+                                          ref.read(habitNotifierProvider.notifier).toggleHabitCompletion(
+                                                habitId: item.habit.habitId,
+                                                userId: user.uid,
+                                                date: DateTime.now(),
+                                                completed: val,
+                                              );
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
-                        ).animate(delay: (100 * index).ms).fadeIn(duration: 400.ms).slideX(begin: 0.1);
+                        )
+                        .animate(key: ValueKey('${item.habit.habitId}_${item.completed}'))
+                        .fadeIn(duration: 400.ms)
+                        .slideX(begin: 0.05)
+                        .then(delay: 100.ms)
+                        .shake(duration: item.completed ? 400.ms : 0.ms, hz: 4);
                       },
                       childCount: habits.length,
                     ),

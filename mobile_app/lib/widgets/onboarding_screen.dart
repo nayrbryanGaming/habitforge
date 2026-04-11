@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/constants/app_routes.dart';
@@ -17,19 +18,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<Map<String, String>> _pages = [
     {
-      'title': 'Build Consistency',
-      'description': 'Track your daily habits and maintain powerful streaks to stay motivated.',
+      'title': 'Forge Better Habits',
+      'description': 'Transform your life one daily routine at a time with the power of consistency.',
+      'icon': '🔨',
+      'color': '#2563EB',
+    },
+    {
+      'title': 'Smart Reinforcement',
+      'description': 'Intelligent reminders and streak tracking to keep your motivation high.',
       'icon': '🔥',
+      'color': '#F97316',
     },
     {
-      'title': 'Smart Reminders',
-      'description': 'Never miss a habit with timed notifications that keep you on track.',
-      'icon': '🔔',
-    },
-    {
-      'title': 'Visual Progress',
-      'description': 'Watch your life transform with detailed analytics and insights.',
-      'icon': '📈',
+      'title': 'Visual Mastery',
+      'description': 'Decode your behavior with high-fidelity analytics and progress metrics.',
+      'icon': '📊',
+      'color': '#10B981',
     },
   ];
 
@@ -44,88 +48,149 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: PageView.builder(
-                controller: _pageController,
-                onPageChanged: (index) => setState(() => _currentPage = index),
-                itemCount: _pages.length,
-                itemBuilder: (context, index) {
-                  final page = _pages[index];
-                  return Padding(
-                    padding: const EdgeInsets.all(40.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          page['icon']!,
-                          style: const TextStyle(fontSize: 100),
-                        ),
-                        const SizedBox(height: 48),
-                        Text(
-                          page['title']!,
-                          style: Theme.of(context).textTheme.headlineMedium,
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          page['description']!,
-                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                color: AppColors.textSecondary,
-                              ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  );
-                },
+      backgroundColor: AppColors.backgroundLight,
+      body: Stack(
+        children: [
+          // Background Gradient decoration
+          AnimatedContainer(
+            duration: 800.ms,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Color(int.parse(_pages[_currentPage]['color']!.replaceFirst('#', '0xFF'))).withOpacity(0.05),
+                  AppColors.backgroundLight,
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  TextButton(
-                    onPressed: _finish,
-                    child: const Text('Skip'),
+          ),
+          SafeArea(
+            child: Column(
+              children: [
+                Expanded(
+                  child: PageView.builder(
+                    controller: _pageController,
+                    onPageChanged: (index) => setState(() => _currentPage = index),
+                    itemCount: _pages.length,
+                    itemBuilder: (context, index) {
+                      final page = _pages[index];
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 40.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 200,
+                              height: 200,
+                              decoration: BoxDecoration(
+                                color: Color(int.parse(page['color']!.replaceFirst('#', '0xFF'))).withOpacity(0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  page['icon']!,
+                                  style: const TextStyle(fontSize: 80),
+                                ),
+                              ),
+                            ).animate(key: ValueKey(index)).scale(duration: 600.ms, curve: Curves.backOut).shimmer(delay: 800.ms),
+                            const SizedBox(height: 60),
+                            Text(
+                              page['title']!,
+                              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.textPrimary,
+                                  ),
+                              textAlign: TextAlign.center,
+                            ).animate(key: ValueKey(index)).fadeIn(delay: 200.ms).slideY(begin: 0.2),
+                            const SizedBox(height: 16),
+                            Text(
+                              page['description']!,
+                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                    color: AppColors.textSecondary,
+                                    height: 1.5,
+                                  ),
+                              textAlign: TextAlign.center,
+                            ).animate(key: ValueKey(index)).fadeIn(delay: 400.ms).slideY(begin: 0.2),
+                          ],
+                        ),
+                      );
+                    },
                   ),
-                  Row(
-                    children: List.generate(
-                      _pages.length,
-                      (index) => Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        width: _currentPage == index ? 24 : 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: _currentPage == index
-                              ? AppColors.primary
-                              : AppColors.border,
-                          borderRadius: BorderRadius.circular(4),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 40),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      TextButton(
+                        onPressed: _finish,
+                        child: Text(
+                          'Skip',
+                          style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.bold),
                         ),
                       ),
-                    ),
+                      Row(
+                        children: List.generate(
+                          _pages.length,
+                          (index) => AnimatedContainer(
+                            duration: 300.ms,
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            width: _currentPage == index ? 28 : 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: _currentPage == index
+                                  ? Color(int.parse(_pages[index]['color']!.replaceFirst('#', '0xFF')))
+                                  : AppColors.border,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          if (_currentPage < _pages.length - 1) {
+                            _pageController.nextPage(
+                              duration: 500.ms,
+                              curve: Curves.fastOutSlowIn,
+                            );
+                          } else {
+                            _finish();
+                          }
+                        },
+                        child: Container(
+                          width: 60,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Color(int.parse(_pages[_currentPage]['color']!.replaceFirst('#', '0xFF'))),
+                                Color(int.parse(_pages[_currentPage]['color']!.replaceFirst('#', '0xFF'))).withOpacity(0.8),
+                              ],
+                            ),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Color(int.parse(_pages[_currentPage]['color']!.replaceFirst('#', '0xFF'))).withOpacity(0.4),
+                                blurRadius: 15,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            _currentPage == _pages.length - 1 ? Icons.check : Icons.arrow_forward_ios,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  ElevatedButton(
-                    onPressed: () {
-                      if (_currentPage < _pages.length - 1) {
-                        _pageController.nextPage(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        );
-                      } else {
-                        _finish();
-                      }
-                    },
-                    child: Text(_currentPage == _pages.length - 1 ? 'Start' : 'Next'),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

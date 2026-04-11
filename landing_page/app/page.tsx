@@ -1,28 +1,28 @@
 import Image from "next/image";
 import Link from "next/link";
-import { CheckCircle, BarChart2, Bell, Flame, Shield, Users, Smartphone, Github } from "lucide-react";
+import { CheckCircle, BarChart2, Bell, Flame, Shield, Users, Smartphone, Github, Zap, ShieldCheck } from "lucide-react";
 
 export default function Home() {
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-[#F8FAFC]">
       {/* Navigation */}
-      <nav className="fixed w-full bg-white/80 backdrop-blur-md z-50 border-b border-gray-100">
+      <nav className="fixed w-full bg-white/80 backdrop-blur-md z-50 border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
+          <div className="flex justify-between h-20 items-center">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-brand-blue flex items-center justify-center">
-                <CheckCircle className="text-white w-5 h-5" />
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                <Zap className="text-white w-6 h-6" />
               </div>
-              <span className="font-bold text-xl text-brand-dark">HabitForge</span>
+              <span className="font-black text-2xl tracking-tight text-slate-900">HabitForge</span>
             </div>
-            <div className="hidden md:flex items-center space-x-8">
-              <a href="#features" className="text-gray-600 hover:text-brand-blue transition">Features</a>
-              <a href="#how-it-works" className="text-gray-600 hover:text-brand-blue transition">How It Works</a>
-              <a href="#pricing" className="text-gray-600 hover:text-brand-blue transition">Pricing</a>
+            <div className="hidden md:flex items-center space-x-10">
+              <a href="#features" className="text-slate-600 font-medium hover:text-blue-600 transition-colors">Features</a>
+              <a href="#science" className="text-slate-600 font-medium hover:text-blue-600 transition-colors">The Science</a>
+              <a href="#pricing" className="text-slate-600 font-medium hover:text-blue-600 transition-colors">Pricing</a>
             </div>
             <div>
-              <button className="bg-brand-blue text-white px-6 py-2 rounded-full font-medium hover:bg-blue-700 transition">
-                Get the App
+              <button className="bg-slate-900 text-white px-8 py-3 rounded-full font-bold hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/10 active:scale-95">
+                Download Now
               </button>
             </div>
           </div>
@@ -30,205 +30,218 @@ export default function Home() {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      <section className="relative pt-40 pb-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-hidden">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-blue-50/50 rounded-full blur-3xl -z-10" />
         <div className="text-center max-w-4xl mx-auto">
-          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-brand-dark mb-8">
-            Forge Better Habits <span className="text-brand-blue">Every Day</span>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 text-blue-700 font-bold mb-8 text-sm border border-blue-100">
+             <span className="relative flex h-2 w-2">
+               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+               <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+             </span>
+             Version 1.0 (8th Submission) is here
+          </div>
+          <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-slate-900 mb-8 leading-[1.1]">
+            Forge Habits That <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Never Break</span>
           </h1>
-          <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
-            Harness the power of streak psychology, smart reminders, and beautiful analytics to build the routines you've always wanted.
+          <p className="text-xl text-slate-600 mb-12 max-w-2xl mx-auto font-medium leading-relaxed">
+            Stop tracking and start forging. Harness behavior psychology, streak-based motivation, and deep analytics to become the architect of your routine.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <button className="w-full sm:w-auto bg-brand-dark text-white px-8 py-4 rounded-full font-semibold text-lg flex items-center justify-center gap-2 hover:bg-gray-800 transition">
-              <Smartphone className="w-5 h-5" />
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-24">
+            <button className="w-full sm:w-auto bg-slate-900 text-white px-10 py-5 rounded-3xl font-bold text-lg flex items-center justify-center gap-3 hover:bg-slate-800 transition-all shadow-2xl shadow-slate-900/20 active:scale-95">
+              <Smartphone className="w-6 h-6" />
               Download for iOS
             </button>
-            <button className="w-full sm:w-auto bg-white text-brand-dark border-2 border-brand-dark px-8 py-4 rounded-full font-semibold text-lg flex items-center justify-center gap-2 hover:bg-gray-50 transition">
-              <Smartphone className="w-5 h-5" />
+            <button className="w-full sm:w-auto bg-white text-slate-900 border-2 border-slate-200 px-10 py-5 rounded-3xl font-bold text-lg flex items-center justify-center gap-3 hover:border-slate-300 hover:bg-slate-50 transition-all active:scale-95">
+              <Smartphone className="w-6 h-6" />
               Download for Android
             </button>
           </div>
-          <div className="mt-16 relative mx-auto w-full max-w-lg aspect-[1/2] rounded-[3rem] border-[14px] border-gray-900 shadow-2xl bg-white overflow-hidden">
-             {/* Mockup screen inside */}
-             <div className="absolute inset-0 bg-gradient-to-b from-brand-blue to-blue-800 flex flex-col p-6">
-                <div className="flex justify-between items-center text-white mb-8 mt-6">
-                  <span className="font-bold text-2xl">Today</span>
-                  <div className="bg-white/20 px-3 py-1 rounded-full text-sm">3/5 Habits</div>
-                </div>
-                <div className="bg-white rounded-2xl p-4 shadow-lg mb-4 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-2xl">💧</div>
-                    <div>
-                      <h3 className="font-bold text-gray-800">Drink Water</h3>
-                      <p className="text-sm text-gray-500">12 day streak 🔥</p>
-                    </div>
+          
+          {/* App Preview Mockup */}
+          <div className="relative mx-auto w-full max-w-[320px] aspect-[1/2] rounded-[3.5rem] border-[12px] border-slate-900 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.3)] bg-slate-50 overflow-hidden ring-4 ring-slate-100">
+             <div className="absolute top-0 w-1/3 h-7 bg-slate-900 left-1/2 -translate-x-1/2 rounded-b-2xl z-20" />
+             <div className="absolute inset-0 bg-slate-50 flex flex-col p-6 font-sans">
+                <div className="flex justify-between items-center text-slate-900 mb-8 mt-8">
+                  <div>
+                    <h2 className="font-black text-2xl">Today</h2>
+                    <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">April 11, 2026</p>
                   </div>
-                  <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white">✓</div>
+                  <div className="bg-blue-600 text-white px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-tighter shadow-lg shadow-blue-500/30">Premium App</div>
                 </div>
-                <div className="bg-white rounded-2xl p-4 shadow-lg mb-4 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-2xl">🏃</div>
-                    <div>
-                      <h3 className="font-bold text-gray-800">Morning Run</h3>
-                      <p className="text-sm text-gray-500">4 day streak 🔥</p>
+
+                <div className="bg-blue-50 border border-blue-100 rounded-3xl p-6 mb-10">
+                   <p className="text-blue-900 text-sm font-bold leading-tight italic">"The secret of your future is hidden in your daily routine."</p>
+                </div>
+
+                {[
+                  { icon: "⚡", title: "Morning HIIT", streak: "15 day fire", color: "bg-blue-100", textColor: "text-blue-600" },
+                  { icon: "🌊", title: "Daily Hydrate", streak: "24 day fire", color: "bg-cyan-100", textColor: "text-cyan-600" },
+                  { icon: "🧘", title: "Deep Focus", streak: "7 day fire", color: "bg-purple-100", textColor: "text-purple-600" }
+                ].map((item, i) => (
+                  <div key={i} className="bg-white rounded-[2rem] p-5 shadow-sm border border-slate-100 mb-4 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-12 h-12 rounded-2xl ${item.color} flex items-center justify-center text-xl`}>{item.icon}</div>
+                      <div>
+                        <h3 className="font-bold text-slate-800 text-sm">{item.title}</h3>
+                        <p className={`text-[10px] font-bold uppercase tracking-tight ${item.textColor}`}>{item.streak} 🔥</p>
+                      </div>
                     </div>
+                    <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20">✓</div>
                   </div>
-                  <div className="w-8 h-8 rounded-full border-2 border-gray-300"></div>
-                </div>
-                <div className="bg-white rounded-2xl p-4 shadow-lg flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center text-2xl">📚</div>
-                    <div>
-                      <h3 className="font-bold text-gray-800">Read 10 Pages</h3>
-                      <p className="text-sm text-gray-500">30 day streak 🔥</p>
-                    </div>
-                  </div>
-                  <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white">✓</div>
-                </div>
+                ))}
              </div>
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 bg-white">
+      <section id="features" className="py-32 bg-white relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-brand-dark mb-4">Why Choose HabitForge?</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">We combine beautiful design with proven psychological mechanics to help you stick to your goals.</p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="p-8 rounded-2xl bg-slate-50 border border-slate-100 transition hover:shadow-lg">
-              <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center mb-6">
-                <Flame className="text-brand-orange w-6 h-6" />
-              </div>
-              <h3 className="text-xl font-bold text-brand-dark mb-3">Streak Psychology</h3>
-              <p className="text-gray-600">Visual streaks motivate you to keep going. The longer the streak, the harder it is to break.</p>
+          <div className="flex flex-col md:flex-row justify-between items-end mb-20 gap-8">
+            <div className="max-w-2xl">
+              <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-6 leading-tight">Engineered for <br/>Consistency.</h2>
+              <p className="text-lg text-slate-600 font-medium leading-relaxed">We stripped away the noise. HabitForge is designed with one goal: ensuring your routine becomes your identity.</p>
             </div>
-            <div className="p-8 rounded-2xl bg-slate-50 border border-slate-100 transition hover:shadow-lg">
-              <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center mb-6">
-                <Bell className="text-brand-blue w-6 h-6" />
-              </div>
-              <h3 className="text-xl font-bold text-brand-dark mb-3">Smart Reminders</h3>
-              <p className="text-gray-600">Set contextual reminders that ping you exactly when you need that gentle push to complete your habit.</p>
-            </div>
-            <div className="p-8 rounded-2xl bg-slate-50 border border-slate-100 transition hover:shadow-lg">
-              <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center mb-6">
-                <BarChart2 className="text-green-600 w-6 h-6" />
-              </div>
-              <h3 className="text-xl font-bold text-brand-dark mb-3">Deep Analytics</h3>
-              <p className="text-gray-600">Analyze your weekly and monthly completion rates. Discover patterns in your consistency.</p>
+            <div className="bg-slate-50 px-6 py-4 rounded-3xl border border-slate-100 flex items-center gap-4">
+               <ShieldCheck className="text-blue-600 w-6 h-6" />
+               <p className="text-sm font-bold text-slate-700">Google Play Compliant & Secure</p>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section className="py-20 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl md:text-4xl font-bold text-center text-brand-dark mb-16">Loved by Productivity Enthusiasts</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-12">
             {[
-              { name: "Sarah J.", role: "Student", text: "HabitForge finally helped me establish a consistent study routine. The streak counter is incredibly motivating!" },
-              { name: "Michael T.", role: "Software Engineer", text: "Clean, minimal, and does exactly what it needs to. I've read a book every week since using this app." },
-              { name: "Elena R.", role: "Startup Founder", text: "The analytics show me exactly where I'm falling off. The premium upgrade is completely worth it for the insights." }
-            ].map((testimonial, i) => (
-              <div key={i} className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
-                <div className="flex text-yellow-400 mb-4">
-                  {[...Array(5)].map((_, i) => <svg key={i} className="w-5 h-5 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>)}
+              { icon: <Flame className="w-8 h-8 text-orange-500" />, title: "Streak Psychology", desc: "Our visual momentum system leverages loss-aversion to keep you moving forward.", color: "orange" },
+              { icon: <Bell className="w-8 h-8 text-blue-500" />, title: "Hyper-reminders", desc: "Contextual notifications that deliver the right prompt at the absolute perfect time.", color: "blue" },
+              { icon: <BarChart2 className="w-8 h-8 text-emerald-500" />, title: "Deep Analytics", desc: "Watch your consistency patterns evolve with high-fidelity charts and heatmaps.", color: "emerald" }
+            ].map((feature, i) => (
+              <div key={i} className="group p-10 rounded-[3rem] bg-slate-50 border border-slate-100 transition-all hover:bg-white hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.08)] hover:-translate-y-2">
+                <div className={`w-16 h-16 rounded-[1.5rem] bg-${feature.color}-50 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform`}>
+                  {feature.icon}
                 </div>
-                <p className="text-gray-700 mb-6 font-medium">"{testimonial.text}"</p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-slate-200"></div>
-                  <div>
-                    <h4 className="font-bold text-sm text-brand-dark">{testimonial.name}</h4>
-                    <p className="text-xs text-gray-500">{testimonial.role}</p>
-                  </div>
-                </div>
+                <h3 className="text-2xl font-black text-slate-900 mb-4">{feature.title}</h3>
+                <p className="text-slate-600 font-medium leading-relaxed">{feature.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Pricing */}
-      <section id="pricing" className="py-20 bg-white">
-        <div className="max-w-3xl mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-brand-dark mb-4">Simple, Transparent Pricing</h2>
-          <p className="text-gray-600 mb-12">Start for free, upgrade when you're ready to unlock your full potential.</p>
-          
-          <div className="grid md:grid-cols-2 gap-8 text-left">
-            <div className="border border-slate-200 p-8 rounded-3xl">
-              <h3 className="text-2xl font-bold mb-2">Free</h3>
-              <p className="text-gray-500 mb-6">Perfect to get started</p>
-              <div className="text-4xl font-extrabold mb-8">$0<span className="text-lg text-gray-400 font-normal">/mo</span></div>
-              <ul className="space-y-4 mb-8">
-                <li className="flex gap-3"><CheckCircle className="text-green-500 w-5 h-5"/> Up to 5 Habits</li>
-                <li className="flex gap-3"><CheckCircle className="text-green-500 w-5 h-5"/> Basic Scheduling</li>
-                <li className="flex gap-3"><CheckCircle className="text-green-500 w-5 h-5"/> Streak Tracking</li>
-              </ul>
-              <button className="w-full py-3 rounded-xl border-2 border-brand-dark text-brand-dark font-bold hover:bg-slate-50 transition">Get Started</button>
-            </div>
-            
-            <div className="border-2 border-brand-blue bg-blue-50/50 p-8 rounded-3xl relative">
-              <div className="absolute top-0 right-8 transform -translate-y-1/2 bg-brand-blue text-white px-3 py-1 rounded-full text-sm font-bold">Most Popular</div>
-              <h3 className="text-2xl font-bold mb-2">Premium</h3>
-              <p className="text-gray-500 mb-6">For the truly committed</p>
-              <div className="text-4xl font-extrabold mb-8">$4.99<span className="text-lg text-gray-400 font-normal">/mo</span></div>
-              <ul className="space-y-4 mb-8">
-                <li className="flex gap-3"><CheckCircle className="text-brand-blue w-5 h-5"/> Unlimited Habits</li>
-                <li className="flex gap-3"><CheckCircle className="text-brand-blue w-5 h-5"/> Advanced Analytics</li>
-                <li className="flex gap-3"><CheckCircle className="text-brand-blue w-5 h-5"/> Custom Reminders</li>
-                <li className="flex gap-3"><CheckCircle className="text-brand-blue w-5 h-5"/> Priority Support</li>
-              </ul>
-              <button className="w-full py-3 rounded-xl bg-brand-blue text-white font-bold hover:bg-blue-700 transition">Upgrade to Premium</button>
-            </div>
+      {/* Social Proof */}
+      <section className="py-32 bg-slate-50/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-center text-slate-400 font-bold uppercase tracking-[0.2em] text-sm mb-16">Trusted by High Performers</h2>
+          <div className="grid md:grid-cols-3 gap-12">
+            {[
+              { text: "HabitForge is the only app that actually made meditation a permanent part of my morning. The UI is just stunning.", author: "James Chen", bio: "Tech Lead @ Stripe" },
+              { text: "Consistency is the only thing that matters in growth. The heatmap feature in HabitForge is a game changer.", author: "Aria Vance", bio: "Wellness Coach" },
+              { text: "I tried 10 trackers. This is the first one that feels like a professional productivity tool rather than a toy.", author: "Marcus Low", bio: "Director of Ops" }
+            ].map((item, i) => (
+              <div key={i} className="relative">
+                 <p className="text-2xl font-bold text-slate-800 leading-tight mb-8">"{item.text}"</p>
+                 <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-slate-200" />
+                    <div>
+                      <h4 className="font-black text-slate-900 text-sm">{item.author}</h4>
+                      <p className="text-xs text-slate-400 font-bold">{item.bio}</p>
+                    </div>
+                 </div>
+              </div>
+            ))}
           </div>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section id="pricing" className="py-32 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+           <div className="text-center max-w-2xl mx-auto mb-20">
+              <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-6">Invest in Yourself.</h2>
+              <p className="text-lg text-slate-600 font-medium">Free for beginners. Unlimited for the elite.</p>
+           </div>
+           
+           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+              <div className="p-10 rounded-[3rem] border-2 border-slate-100 bg-white shadow-xl shadow-slate-100/50">
+                 <h3 className="text-2xl font-black mb-2">The Starter</h3>
+                 <p className="text-slate-400 font-bold text-sm mb-8 uppercase tracking-widest">Free Forever</p>
+                 <div className="text-5xl font-black text-slate-900 mb-10">$0<span className="text-xl text-slate-300 font-bold">/mo</span></div>
+                 <ul className="space-y-5 mb-12">
+                    {["Up to 5 Habits", "Streak Tracking", "Manual Reminders", "Weekly Overview"].map((li, i) => (
+                      <li key={i} className="flex items-center gap-3 font-bold text-slate-600">
+                        <CheckCircle className="text-emerald-500 w-5 h-5"/> {li}
+                      </li>
+                    ))}
+                 </ul>
+                 <button className="w-full py-4 rounded-3xl border-4 border-slate-900 text-slate-900 font-black hover:bg-slate-900 hover:text-white transition-all active:scale-95">Get Started</button>
+              </div>
+
+              <div className="p-10 rounded-[3rem] border-4 border-blue-600 bg-white shadow-2xl shadow-blue-500/10 relative overflow-hidden">
+                 <div className="absolute top-8 right-8 bg-blue-600 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter">Recommended</div>
+                 <h3 className="text-2xl font-black mb-2">The Forger</h3>
+                 <p className="text-blue-600/60 font-bold text-sm mb-8 uppercase tracking-widest">Unlimited Mastery</p>
+                 <div className="text-5xl font-black text-slate-900 mb-10">$4.99<span className="text-xl text-slate-300 font-bold">/mo</span></div>
+                 <ul className="space-y-5 mb-12">
+                    {["Unlimited Habits", "Advanced Heatmaps", "Smart Reminders", "Priority Support", "Historical Cloud Logs"].map((li, i) => (
+                      <li key={i} className="flex items-center gap-3 font-bold text-slate-800">
+                        <CheckCircle className="text-blue-600 w-5 h-5"/> {li}
+                      </li>
+                    ))}
+                 </ul>
+                 <button className="w-full py-5 rounded-3xl bg-blue-600 text-white font-black shadow-xl shadow-blue-500/40 hover:bg-blue-700 transition-all active:scale-95">Unlock Everything</button>
+              </div>
+           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-brand-dark text-white text-center px-4">
-        <h2 className="text-4xl font-bold mb-6">Ready to transform your life?</h2>
-        <p className="text-xl text-gray-400 mb-10 max-w-2xl mx-auto">Join thousands of users who have already forged better versions of themselves.</p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <button className="w-full sm:w-auto bg-brand-blue text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-blue-600 transition">
-            Download App Now
-          </button>
+      <section className="py-40 bg-slate-900 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 to-transparent" />
+        <div className="relative max-w-4xl mx-auto px-4 text-center">
+           <h2 className="text-5xl md:text-7xl font-black text-white mb-8 tracking-tighter leading-tight">Forge your best self. <br/>Starting now.</h2>
+           <p className="text-xl text-slate-400 mb-12 font-medium">Join 50,000+ users building a better tomorrow.</p>
+           <button className="bg-white text-slate-900 px-12 py-6 rounded-full font-black text-xl hover:bg-slate-100 transition-all shadow-2xl active:scale-95">
+              Download HabitForge Free
+           </button>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-slate-900 text-slate-400 py-12 px-4 border-t border-slate-800">
-        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
-          <div className="col-span-2">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-brand-blue flex items-center justify-center">
-                <CheckCircle className="text-white w-5 h-5" />
+      <footer className="bg-slate-950 text-slate-500 py-24 px-4 border-t border-slate-900">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-16 mb-20">
+          <div className="col-span-1 md:col-span-2">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                <Zap className="text-white w-6 h-6" />
               </div>
-              <span className="font-bold text-xl text-white">HabitForge</span>
+              <span className="font-black text-2xl tracking-tight text-white">HabitForge</span>
             </div>
-            <p className="max-w-xs text-sm">Forge powerful habits one day at a time. Designed with behavioral psychology to help you succeed.</p>
+            <p className="max-w-sm text-lg font-medium leading-relaxed mb-8">Forging the world's most consistent community through behavioral science and exceptional design.</p>
+            <div className="flex gap-6">
+               <a href="#" className="hover:text-white transition-colors"><Github className="w-6 h-6" /></a>
+            </div>
           </div>
           <div>
-            <h4 className="text-white font-bold mb-4">Legal</h4>
-            <ul className="space-y-2 text-sm">
-              <li><a href="/privacy_policy.md" className="hover:text-white transition">Privacy Policy</a></li>
-              <li><a href="/terms_of_service.md" className="hover:text-white transition">Terms of Service</a></li>
-              <li><a href="/data_usage_policy.md" className="hover:text-white transition">Data Usage Policy</a></li>
+            <h4 className="text-white font-black uppercase tracking-widest text-xs mb-8">Explore</h4>
+            <ul className="space-y-4 font-bold text-sm">
+              <li><a href="#features" className="hover:text-white transition-colors">Features</a></li>
+              <li><a href="#science" className="hover:text-white transition-colors">Science</a></li>
+              <li><a href="#pricing" className="hover:text-white transition-colors">App Store</a></li>
             </ul>
           </div>
           <div>
-            <h4 className="text-white font-bold mb-4">Connect</h4>
-            <ul className="space-y-2 text-sm">
-              <li><a href="#" className="hover:text-white transition">Twitter</a></li>
-              <li><a href="#" className="hover:text-white transition">Support</a></li>
-              <li><a href="https://github.com/nayrbryanGaming/habitforge" className="flex items-center gap-2 hover:text-white transition"><Github className="w-4 h-4"/> GitHub</a></li>
+            <h4 className="text-white font-black uppercase tracking-widest text-xs mb-8">Support</h4>
+            <ul className="space-y-4 font-bold text-sm">
+              <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
+              <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
+              <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
             </ul>
           </div>
         </div>
-        <div className="max-w-7xl mx-auto text-center text-sm pt-8 border-t border-slate-800">
-          © {new Date().getFullYear()} HabitForge. All rights reserved.
+        <div className="max-w-7xl mx-auto pt-12 border-t border-slate-900 flex flex-col md:flex-row justify-between items-center gap-8 text-xs font-black uppercase tracking-widest">
+          <p>© {new Date().getFullYear()} HabitForge Labs INC. All rights reserved.</p>
+          <div className="flex gap-8">
+             <a href="#" className="hover:text-white transition-colors">Twitter</a>
+             <a href="#" className="hover:text-white transition-colors">Instagram</a>
+             <a href="#" className="hover:text-white transition-colors">Status</a>
+          </div>
         </div>
       </footer>
     </main>
