@@ -49,7 +49,16 @@ class AuthNotifier extends StateNotifier<AsyncValue<UserModel?>> {
   Future<void> resetPassword(String email) async {
     await _authService.sendPasswordResetEmail(email);
   }
+
+  Future<void> deleteAccount() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      await _authService.deleteAccount();
+      return null;
+    });
+  }
 }
+
 
 final authNotifierProvider =
     StateNotifierProvider<AuthNotifier, AsyncValue<UserModel?>>((ref) {

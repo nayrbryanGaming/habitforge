@@ -1,0 +1,41 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Function to check if user owns the document
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // Habits Collection
+    match /habits/{habitId} {
+      allow read, create, update, delete: if isOwner(resource.data.user_id || request.resource.data.user_id);
+      
+      // Validation for new habits
+      allow create: if request.resource.data.title.size() > 0 
+                   && request.resource.data.user_id == request.auth.uid;
+    }
+
+    // Habit Logs Collection
+    match /habit_logs/{logId} {
+      allow read, write: if isOwner(resource.data.user_id || request.resource.data.user_id);
+    }
+
+    // Analytics Collection
+    match /analytics/{userId} {
+      allow read: if isOwner(userId);
+      allow write: if false; // Only Cloud Functions should update analytics
+    }
+  }
+}

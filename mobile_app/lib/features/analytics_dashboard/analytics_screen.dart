@@ -2,268 +2,446 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../core/theme/app_colors.dart';
+import '../../widgets/skeleton_container.dart';
 import '../authentication/auth_provider.dart';
 import 'analytics_provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../widgets/empty_state_widget.dart';
+import '../../core/services/analytics_service.dart';
+import '../../core/constants/app_routes.dart';
+import 'package:go_router/go_router.dart';
 
 class AnalyticsScreen extends ConsumerWidget {
   const AnalyticsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(authStateProvider).value;
-    if (user == null) return const Center(child: CircularProgressIndicator());
+    final authState = ref.watch(authStateProvider);
+    final userId = authState.value?.uid ?? '';
+    
+    if (userId.isEmpty) return const Center(child: CircularProgressIndicator());
 
-    final analyticsAsync = ref.watch(analyticsProvider(user.uid));
+    final analyticsAsync = ref.watch(analyticsProvider(userId));
 
     return Scaffold(
+      backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        title: const Text('Analytics & Progress'),
+        title: const Text('Forge Analytics'),
+        centerTitle: true,
       ),
       body: analyticsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const _AnalyticsSkeleton(),
         error: (err, stack) => Center(child: Text('Error: $err')),
         data: (data) {
-          return CustomScrollView(
-            slivers: [
-              SliverPadding(
-                padding: const EdgeInsets.all(16.0),
-                sliver: SliverToBoxAdapter(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildOverviewCards(context, data),
-                      const SizedBox(height: 32),
-                      Row(
-                        children: [
-                          const Icon(Icons.show_chart, color: AppColors.primary),
-                          const SizedBox(width: 12),
-                          Text('Forging Consistency', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                        ],
-                      ).animate().fadeIn().slideX(),
-                      const SizedBox(height: 16),
-                      _buildWeeklyChart(data).animate().fadeIn(delay: 200.ms).scale(),
-                      const SizedBox(height: 32),
-                      Row(
-                        children: [
-                          const Icon(Icons.military_tech, color: AppColors.streakGold),
-                          const SizedBox(width: 12),
-                          Text('Habit Performance', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                        ],
-                      ).animate().fadeIn(delay: 400.ms).slideX(),
-                      const SizedBox(height: 16),
-                      _buildHabitList(data),
+          if (data.totalHabits == 0) {
+            return ForgeEmptyState(
+              title: 'Mastery Begins with Action',
+              subtitle: 'Unlock deep insights into your discipline by forging your first habit today.',
+              icon: '📊',
+              buttonLabel: 'START YOUR JOURNEY',
+              onButtonPressed: () => context.push(AppRoutes.createHabit),
+            );
+          }
+          return SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Mastery Progress Card
+                Container(
+                  padding: const EdgeInsets.all(28),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [AppColors.primary, AppColors.primaryDark],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(32),
+                    boxShadow: [
+                      BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 10)),
                     ],
                   ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'WEEKLY MASTERY',
+                                style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 2),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '${(data.weeklyCompletionRate * 100).toInt()}%',
+                                style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(20)),
+                            child: const Icon(Icons.bolt_rounded, color: Colors.white, size: 28),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: LinearProgressIndicator(
+                          value: data.weeklyCompletionRate,
+                          minHeight: 8,
+                          backgroundColor: Colors.white.withOpacity(0.15),
+                          valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      ),
+                    ],
+                  ),
+                ).animate().scale(duration: 500.ms, curve: Curves.easeOutBack),
+                const SizedBox(height: 32),
+
+                // Core Stats Grid
+                _buildSectionHeader('CORE METRICS', Icons.analytics_rounded),
+                const SizedBox(height: 16),
+                GridView.count(
+                  crossAxisCount: 2,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 1.5,
+                  children: [
+                    _buildMetricCard('ACTIVE STREAKS', '${data.activeStreaks}', Icons.local_fire_department, AppColors.streakFire),
+                    _buildMetricCard('TOTAL FORGED', '${data.totalCompletions}', Icons.check_circle, AppColors.success),
+                    _buildMetricCard('HABITS', '${data.totalHabits}', Icons.inventory_2, AppColors.primary),
+                    _buildMetricCard('RECORD', '${data.longestStreak}d', Icons.emoji_events, AppColors.streakGold),
+                  ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 40),
+
+                // FORGE AI INSIGHTS
+                _buildSectionHeader('CHIEF ARCHITECT INSIGHTS', Icons.auto_awesome_rounded),
+                const SizedBox(height: 16),
+                _buildInsightCard(data),
+                const SizedBox(height: 32),
+
+                // MASTERY BADGES
+                _buildSectionHeader('MASTERY BADGES', Icons.workspace_premium_rounded),
+                const SizedBox(height: 16),
+                _buildBadgesGrid(data),
+                const SizedBox(height: 40),
+
+                // Completion Trend
+                _buildSectionHeader('COMPLETION TREND', Icons.show_chart_rounded),
+                const SizedBox(height: 16),
+                _buildWeeklyChart(data).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1),
+                const SizedBox(height: 32),
+
+                // Individual Habit Performance
+                _buildSectionHeader('HABIT PERFORMANCE', Icons.list_alt_rounded),
+                const SizedBox(height: 16),
+                _buildHabitList(ref, userId, data),
+                const SizedBox(height: 40),
+              ],
+            ),
           );
         },
       ),
     );
   }
 
-  Widget _buildOverviewCards(BuildContext context, dynamic data) {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
-      childAspectRatio: 1.4,
+  Widget _buildSectionHeader(String title, IconData icon) {
+    return Row(
       children: [
-        _buildStatCard(context, 'Success Rate', '${(data.weeklyCompletionRate * 100).toInt()}%', Icons.auto_graph, AppColors.success, 0),
-        _buildStatCard(context, 'Active Fire', '${data.activeStreaks}', Icons.local_fire_department, AppColors.streakFire, 1),
-        _buildStatCard(context, 'Forged Habits', '${data.totalHabits}', Icons.inventory_2, AppColors.primary, 2),
-        _buildStatCard(context, 'Elite Streak', '${data.longestStreak} d', Icons.workspace_premium, AppColors.streakGold, 3),
+        Icon(icon, size: 16, color: AppColors.primary),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w900,
+            color: AppColors.textSecondary,
+            letterSpacing: 2,
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildStatCard(BuildContext context, String title, String value, IconData icon, Color color, int index) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), border: Border.all(color: AppColors.border)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-              child: Icon(icon, color: color, size: 20),
-            ),
-            const Spacer(),
-            Text(
-              value,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, fontSize: 20),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w500),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-      ),
-    ).animate().fadeIn(delay: (index * 100).ms).slideY(begin: 0.2);
-  }
-
-  Widget _buildWeeklyChart(dynamic data) {
-    if (data.weeklyData.isEmpty) return const SizedBox();
-
+  Widget _buildMetricCard(String label, String value, IconData icon, Color color) {
     return Container(
-      height: 240,
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.border.withOpacity(0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text('Completion Trends', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
-          const SizedBox(height: 20),
-          Expanded(
-            child: BarChart(
-              BarChartData(
-                alignment: BarChartAlignment.spaceAround,
-                maxY: 1.0,
-                barTouchData: BarTouchData(
-                  touchTooltipData: BarTouchTooltipData(
-                    getTooltipColor: (_) => AppColors.primary,
-                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                      return BarTooltipItem(
-                        '${(rod.toY * 100).toInt()}%',
-                        const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                      );
-                    },
-                  ),
-                ),
-                titlesData: FlTitlesData(
-                  show: true,
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (double value, TitleMeta meta) {
-                        const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-                        final index = value.toInt();
-                        if (index < 0 || index >= data.weeklyData.length) return const Text('');
-                        final date = data.weeklyData[index].date;
-                        final dayStr = days[date.weekday - 1];
-                        return SideTitleWidget(
-                          axisSide: meta.axisSide,
-                          child: Text(dayStr, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
-                        );
-                      },
-                    ),
-                  ),
-                  leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                ),
-                borderData: FlBorderData(show: false),
-                gridData: const FlGridData(show: false),
-                barGroups: List.generate(data.weeklyData.length, (index) {
-                  final dayData = data.weeklyData[index];
-                  final val = dayData.total == 0 ? 0.0 : (dayData.completed / dayData.total);
-                  return BarChartGroupData(
-                    x: index,
-                    barRods: [
-                      BarChartRodData(
-                        toY: val,
-                        color: AppColors.primary,
-                        gradient: const LinearGradient(
-                          colors: [AppColors.primary, AppColors.secondary],
-                          begin: Alignment.bottomCenter,
-                          end: Alignment.topCenter,
-                        ),
-                        width: 14,
-                        borderRadius: BorderRadius.circular(6),
-                        backDrawRodData: BackgroundBarChartRodData(
-                          show: true,
-                          toY: 1,
-                          color: AppColors.surfaceLight,
-                        ),
-                      ),
-                    ],
-                  );
-                }),
-              ),
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(label, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1)),
+              Icon(icon, color: color, size: 16),
+            ],
           ),
+          const SizedBox(height: 8),
+          Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
         ],
       ),
     );
   }
 
-  Widget _buildHabitList(dynamic data) {
-    if (data.habitCompletionRates.isEmpty) {
-      return const Center(child: Text('No habit data yet.'));
-    }
-
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: data.habitCompletionRates.length,
-      itemBuilder: (context, index) {
-        final entry = data.habitCompletionRates.entries.elementAt(index);
-        // In a real app, you'd fetch the habit title/icon from a provider
-        // For this UI demo, we'll use generic styling
-        return Container(
-          margin: const EdgeInsets.only(bottom: 16),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border),
+  Widget _buildWeeklyChart(AnalyticsModel data) {
+    return Container(
+      height: 220,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.border.withOpacity(0.5)),
+      ),
+      child: BarChart(
+        BarChartData(
+          alignment: BarChartAlignment.spaceAround,
+          maxY: 1.0,
+          barTouchData: BarTouchData(enabled: true),
+          titlesData: FlTitlesData(
+            show: true,
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (val, meta) {
+                  const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+                  final index = val.toInt();
+                  if (index < 0 || index >= data.weeklyData.length) return const SizedBox();
+                  final day = days[data.weeklyData[index].date.weekday - 1];
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text(day, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
+                  );
+                },
+              ),
+            ),
+            leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          borderData: FlBorderData(show: false),
+          gridData: const FlGridData(show: false),
+          barGroups: List.generate(data.weeklyData.length, (i) {
+            final day = data.weeklyData[i];
+            return BarChartGroupData(
+              x: i,
+              barRods: [
+                BarChartRodData(
+                  toY: day.rate,
+                  color: AppColors.primary,
+                  width: 12,
+                  borderRadius: BorderRadius.circular(6),
+                  backDrawRodData: BackgroundBarChartRodData(
+                    show: true,
+                    toY: 1,
+                    color: AppColors.surfaceLight,
+                  ),
+                ),
+              ],
+            );
+          }),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHabitList(WidgetRef ref, String userId, AnalyticsModel data) {
+    final habitsAsync = ref.watch(habitsStreamProvider(userId));
+
+    return habitsAsync.when(
+      loading: () => const SizedBox(),
+      error: (_, __) => const SizedBox(),
+      data: (habits) {
+        if (habits.isEmpty) return const Center(child: Text('No habits yet.'));
+
+        return ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: habits.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          itemBuilder: (context, index) {
+            final habit = habits[index];
+            final rate = data.habitCompletionRates[habit.habitId] ?? 0.0;
+            final color = Color(int.parse(habit.color.replaceFirst('#', '0xFF')));
+
+            return Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppColors.border.withOpacity(0.5)),
+              ),
+              child: Column(
                 children: [
                   Row(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-                        child: const Icon(Icons.bolt, color: AppColors.primary, size: 16),
-                      ),
+                      Text(habit.icon, style: const TextStyle(fontSize: 22)),
                       const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(habit.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                      ),
                       Text(
-                        'Habit ${index + 1}',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                        '${(rate * 100).toInt()}%',
+                        style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 13),
                       ),
                     ],
                   ),
-                  Text(
-                    '${(entry.value * 100).toInt()}%',
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.success),
+                  const SizedBox(height: 12),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: rate,
+                      minHeight: 6,
+                      backgroundColor: color.withOpacity(0.1),
+                      valueColor: AlwaysStoppedAnimation<Color>(color),
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: LinearProgressIndicator(
-                  value: entry.value,
-                  minHeight: 8,
-                  backgroundColor: AppColors.surfaceLight,
-                  valueColor: const AlwaysStoppedAnimation<Color>(AppColors.success),
-                ),
-              ),
-            ],
-          ),
-        ).animate(delay: (index * 100).ms).fadeIn().slideY(begin: 0.1);
+            ).animate(delay: (index * 50).ms).fadeIn().slideX(begin: 0.05);
+          },
+        );
       },
+    );
+  }
+
+  Widget _buildInsightCard(AnalyticsModel data) {
+    final insight = AnalyticsService.getForgeInsight(data);
+    return Container(
+      padding: const EdgeInsets.all(24),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: AppColors.primary.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: AppColors.primary.withOpacity(0.1)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.psychology_rounded, color: AppColors.primary, size: 32),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'SENSEI ARCHITECT',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.primary,
+                    letterSpacing: 2,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  insight,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    height: 1.6,
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ).animate().fadeIn(delay: 100.ms).slideX(begin: 0.1);
+  }
+
+  Widget _buildBadgesGrid(AnalyticsModel data) {
+    final badges = AnalyticsService.calculateMasteryBadges(data);
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: AppColors.border.withOpacity(0.5)),
+      ),
+      child: badges.isEmpty
+          ? const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 24.0),
+                child: Text('No badges earned yet. Forge ahead!', style: TextStyle(color: AppColors.textSecondary)),
+              ),
+            )
+          : GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                mainAxisSpacing: 16,
+                crossAxisSpacing: 16,
+                childAspectRatio: 0.9,
+              ),
+              itemCount: badges.length,
+              itemBuilder: (context, i) {
+                final badge = badges[i];
+                return Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(child: Text(badge['icon'] as String, style: const TextStyle(fontSize: 28))),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      badge['name'] as String,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ).animate().scale(delay: (i * 100).ms, duration: 400.ms, curve: Curves.backOut);
+              },
+            ),
+    );
+  }
+}
+
+class _AnalyticsSkeleton extends StatelessWidget {
+  const _AnalyticsSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          const SkeletonContainer(width: double.infinity, height: 160, borderRadius: BorderRadius.all(Radius.circular(32))),
+          const SizedBox(height: 32),
+          GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 1.5,
+            children: List.generate(4, (index) => const SkeletonContainer.rounded(width: double.infinity, height: 80)),
+          ),
+          const SizedBox(height: 32),
+          const SkeletonContainer(width: double.infinity, height: 220, borderRadius: BorderRadius.all(Radius.circular(24))),
+          const SizedBox(height: 32),
+          const SkeletonContainer(width: double.infinity, height: 300, borderRadius: BorderRadius.all(Radius.circular(24))),
+        ],
+      ),
     );
   }
 }

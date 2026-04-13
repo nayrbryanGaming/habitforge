@@ -1,35 +1,85 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/services/notification_service.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
 
-  // Lock to portrait orientation
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
+    // Lock to portrait orientation
+    await SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
 
-  // System UI overlay style
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.dark,
-  ));
+    // System UI overlay style
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+    ));
 
-  // Firebase init
-  await Firebase.initializeApp();
+    // Firebase init
+    await Firebase.initializeApp();
 
-  // Notifications init
-  await NotificationService().initialize();
+    // Hive init
+    await Hive.initFlutter();
+    await Hive.openBox('habits_cache');
+    await Hive.openBox('logs_cache');
 
-  runApp(const ProviderScope(child: HabitForgeApp()));
+    // Notifications init
+    await NotificationService().initialize();
+
+    // Custom Error Boundary
+    ErrorWidget.builder = (FlutterErrorDetails details) {
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        home: Scaffold(
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 60, color: Colors.red),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Something went wrong',
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Our forge is cooling down temporarily. We\'ve been notified and are on it!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                  const SizedBox(height: 32),
+                  ElevatedButton(
+                    onPressed: () => SystemNavigator.pop(),
+                    child: const Text('Close App'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    };
+
+    runApp(const ProviderScope(child: HabitForgeApp()));
+  }, (error, stack) {
+    debugPrint('GLOBAL ERROR: $error');
+    debugPrint('STACK TRACE: $stack');
+  });
 }
+
 
 class HabitForgeApp extends ConsumerWidget {
   const HabitForgeApp({super.key});

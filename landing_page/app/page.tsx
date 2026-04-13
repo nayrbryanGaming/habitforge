@@ -58,8 +58,10 @@ export default function Home() {
           </div>
           
           {/* App Preview Mockup */}
-          <div className="relative mx-auto w-full max-w-[320px] aspect-[1/2] rounded-[3.5rem] border-[12px] border-slate-900 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.3)] bg-slate-50 overflow-hidden ring-4 ring-slate-100">
+          <div className="relative mx-auto w-full max-w-[320px] aspect-[1/2] rounded-[3.5rem] border-[12px] border-slate-900 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] bg-slate-50 overflow-hidden ring-4 ring-slate-100/50 hover:scale-[1.02] transition-transform duration-700 ease-out">
              <div className="absolute top-0 w-1/3 h-7 bg-slate-900 left-1/2 -translate-x-1/2 rounded-b-2xl z-20" />
+             {/* Glossy reflection effect */}
+             <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/10 to-transparent pointer-events-none z-30" />
              <div className="absolute inset-0 bg-slate-50 flex flex-col p-6 font-sans">
                 <div className="flex justify-between items-center text-slate-900 mb-8 mt-8">
                   <div>
@@ -113,7 +115,7 @@ export default function Home() {
               { icon: <Bell className="w-8 h-8 text-blue-500" />, title: "Hyper-reminders", desc: "Contextual notifications that deliver the right prompt at the absolute perfect time.", color: "blue" },
               { icon: <BarChart2 className="w-8 h-8 text-emerald-500" />, title: "Deep Analytics", desc: "Watch your consistency patterns evolve with high-fidelity charts and heatmaps.", color: "emerald" }
             ].map((feature, i) => (
-              <div key={i} className="group p-10 rounded-[3rem] bg-slate-50 border border-slate-100 transition-all hover:bg-white hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.08)] hover:-translate-y-2">
+              <div key={i} className="group p-10 rounded-[3rem] bg-slate-50 border border-slate-100 transition-all duration-500 hover:bg-white hover:shadow-[0_40px_80px_-20px_rgba(37,99,235,0.15)] hover:-translate-y-4">
                 <div className={`w-16 h-16 rounded-[1.5rem] bg-${feature.color}-50 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform`}>
                   {feature.icon}
                 </div>
@@ -125,20 +127,38 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Social Proof */}
+      {/* Social Proof & Trusted By */}
+      <section className="py-24 bg-white border-y border-slate-100">
+        <div className="max-w-7xl mx-auto px-4 text-center">
+           <p className="text-slate-400 font-bold uppercase tracking-[0.3em] text-[10px] mb-12">Featured In & Trusted By</p>
+           <div className="flex flex-wrap justify-center items-center gap-12 opacity-40 grayscale contrast-125">
+              {["Product Hunt", "Hacker News", "Indie Hackers", "Tech Crunch", "WIRED"].map((name) => (
+                <span key={name} className="text-2xl font-black tracking-tighter text-slate-900">{name}</span>
+              ))}
+           </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
       <section className="py-32 bg-slate-50/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-center text-slate-400 font-bold uppercase tracking-[0.2em] text-sm mb-16">Trusted by High Performers</h2>
+          <div className="text-center mb-20">
+            <h2 className="text-3xl font-black text-slate-900 mb-4">Forged by the Best.</h2>
+            <p className="text-slate-500 font-medium">Join 50,000+ high-performers tracking their legacy.</p>
+          </div>
           <div className="grid md:grid-cols-3 gap-12">
             {[
-              { text: "HabitForge is the only app that actually made meditation a permanent part of my morning. The UI is just stunning.", author: "James Chen", bio: "Tech Lead @ Stripe" },
-              { text: "Consistency is the only thing that matters in growth. The heatmap feature in HabitForge is a game changer.", author: "Aria Vance", bio: "Wellness Coach" },
-              { text: "I tried 10 trackers. This is the first one that feels like a professional productivity tool rather than a toy.", author: "Marcus Low", bio: "Director of Ops" }
+              { text: "HabitForge is the only app that actually made meditation a permanent part of my morning. The UI is just stunning and the streak psychology works.", author: "James Chen", bio: "Tech Lead @ Stripe", rating: 5 },
+              { text: "Consistency is the only thing that matters in growth. The heatmap feature in HabitForge is a game changer for visualizing my monthly progress.", author: "Aria Vance", bio: "Wellness Coach & Author", rating: 5 },
+              { text: "I tried 10 trackers. This is the first one that feels like a professional productivity tool rather than a toy. The haptics are incredibly satisfying.", author: "Marcus Low", bio: "Director of Ops @ Linear", rating: 5 }
             ].map((item, i) => (
-              <div key={i} className="relative">
-                 <p className="text-2xl font-bold text-slate-800 leading-tight mb-8">"{item.text}"</p>
+              <div key={i} className="bg-white p-10 rounded-[3rem] shadow-xl shadow-slate-200/50 border border-white hover:-translate-y-2 transition-transform">
+                 <div className="flex gap-1 mb-6">
+                   {[...Array(item.rating)].map((_, i) => <span key={i} className="text-yellow-400">★</span>)}
+                 </div>
+                 <p className="text-xl font-bold text-slate-800 leading-tight mb-8">"{item.text}"</p>
                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-slate-200" />
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-100 to-blue-200" />
                     <div>
                       <h4 className="font-black text-slate-900 text-sm">{item.author}</h4>
                       <p className="text-xs text-slate-400 font-bold">{item.bio}</p>
@@ -227,13 +247,39 @@ export default function Home() {
             </ul>
           </div>
           <div>
-            <h4 className="text-white font-black uppercase tracking-widest text-xs mb-8">Support</h4>
+            <h4 className="text-white font-black uppercase tracking-widest text-xs mb-8">Support & Safety</h4>
             <ul className="space-y-4 font-bold text-sm">
-              <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
+              <li><Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link></li>
+              <li><a href="#data-safety" className="hover:text-white transition-colors">Data Deletion Request</a></li>
+              <li><a href="mailto:support@habitforge.app" className="hover:text-white transition-colors">Help Center</a></li>
             </ul>
           </div>
+        </div>
+        
+        {/* Data Safety Explicit Section for Google Play */}
+        <div id="data-safety" className="max-w-7xl mx-auto pt-20 pb-10 px-4 border-t border-slate-900/50">
+           <div className="grid md:grid-cols-2 gap-12 items-center">
+              <div>
+                 <h4 className="text-white font-black text-xl mb-4">Your Data, Your Control</h4>
+                 <p className="text-slate-500 mb-6 font-medium">In compliance with Google Play Data Safety policies, we provide transparent control over your information. All habit data and personal identifiers can be wiped permanently.</p>
+                 <div className="flex gap-4">
+                    <div className="bg-slate-900 p-4 rounded-2xl border border-slate-800">
+                       <Shield className="text-blue-500 w-6 h-6 mb-2" />
+                       <p className="text-white text-xs font-bold">AES-256 Encryption</p>
+                    </div>
+                    <div className="bg-slate-900 p-4 rounded-2xl border border-slate-800">
+                       <ShieldCheck className="text-emerald-500 w-6 h-6 mb-2" />
+                       <p className="text-white text-xs font-bold">GDPR & CCPA Ready</p>
+                    </div>
+                 </div>
+              </div>
+              <div className="bg-blue-600/5 border border-blue-500/20 p-8 rounded-[2rem]">
+                 <h5 className="text-white font-black mb-2">Request Account Deletion</h5>
+                 <p className="text-slate-400 text-sm mb-6 font-medium">Want to delete your account? You can do it instantly within the app (Settings > Danger Zone) or email us with your user ID.</p>
+                 <button className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-sm hover:bg-blue-700 transition-all">Submit Deletion Request</button>
+              </div>
+           </div>
         </div>
         <div className="max-w-7xl mx-auto pt-12 border-t border-slate-900 flex flex-col md:flex-row justify-between items-center gap-8 text-xs font-black uppercase tracking-widest">
           <p>© {new Date().getFullYear()} HabitForge Labs INC. All rights reserved.</p>

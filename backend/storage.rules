@@ -1,0 +1,28 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Function to check if user owns the path
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Profile Pictures
+    match /users/{userId}/profile.jpg {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId) && request.resource.size < 5 * 1024 * 1024; // Max 5MB
+    }
+    
+    // Generic Assets (Read only for users)
+    match /assets/{allPaths=**} {
+      allow read: if isAuthenticated();
+      allow write: if false; 
+    }
+  }
+}

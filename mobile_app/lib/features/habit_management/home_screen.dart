@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_routes.dart';
 import '../../core/theme/app_colors.dart';
+import '../../widgets/skeleton_container.dart';
 import '../authentication/auth_provider.dart';
 import 'habit_provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../widgets/empty_state_widget.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -19,213 +22,318 @@ class HomeScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Today\'s Habits'),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'HabitForge',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w900,
+                color: AppColors.primary.withOpacity(0.8),
+                letterSpacing: 1.2,
+              ),
+            ),
+            const Text(
+              'Forge your day',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        toolbarHeight: 80,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => context.push(AppRoutes.createHabit),
+          Container(
+            margin: const EdgeInsets.only(right: 16),
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.add, color: AppColors.primary),
+              onPressed: () => context.push(AppRoutes.createHabit),
+            ),
           ),
         ],
       ),
       body: todayHabits.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: 6,
+          itemBuilder: (context, index) => const HabitCardSkeleton(),
+        ),
         error: (err, stack) => Center(child: Text('Error: $err')),
         data: (habits) {
           if (habits.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.checklist_rtl, size: 64, color: AppColors.textSecondary),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No habits for today!',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Tap + to create a new habit.',
-                    style: TextStyle(color: AppColors.textSecondary),
-                  ),
-                ],
-              ),
+            return ForgeEmptyState(
+              title: 'Forge Your First Habit',
+              subtitle: 'Today is a great day to start building consistency. Your future self will thank you.',
+              icon: '🏗️',
+              buttonLabel: 'START FORGING',
+              onButtonPressed: () => context.push(AppRoutes.createHabit),
             );
           }
 
           int completedCount = habits.where((h) => h.completed).length;
           double progress = habits.isEmpty ? 0 : completedCount / habits.length;
 
-          return CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: _buildDailyQuote(context).animate().fadeIn(duration: 600.ms).slideY(begin: -0.2),
-              ),
-              SliverToBoxAdapter(
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    gradient: AppColors.primaryGradient,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withOpacity(0.3),
-                        blurRadius: 15,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
+          return Stack(
+            children: [
+              CustomScrollView(
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: _buildDailyQuote(context).animate().fadeIn(duration: 600.ms).slideY(begin: -0.2),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Daily Forging Progress',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            '$completedCount of ${habits.length} habits forged',
-                            style: const TextStyle(color: Colors.white70),
-                          ),
-                          Text(
-                            '${(progress * 100).toInt()}%',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
+                  SliverToBoxAdapter(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+                      margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [AppColors.primary, AppColors.primaryDark.withOpacity(0.9)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(32),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withOpacity(0.4),
+                            blurRadius: 20,
+                            spreadRadius: -5,
+                            offset: const Offset(0, 12),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: LinearProgressIndicator(
-                          value: progress,
-                          minHeight: 10,
-                          backgroundColor: Colors.white24,
-                          valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      ),
-                    ],
-                  ),
-                ).animate().scale(delay: 200.ms, duration: 400.ms, curve: Curves.backOut),
-              ),
-              if (habits.isNotEmpty)
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderListener(
-                      (context, index) {
-                        final item = habits[index];
-                        final habitColor = Color(int.parse(item.habit.color.replaceFirst('#', '0xFF')));
-
-                        return Card(
-                          margin: const EdgeInsets.only(bottom: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24),
-                            side: BorderSide(
-                              color: item.completed ? AppColors.success.withOpacity(0.2) : Colors.transparent,
-                              width: 2,
-                            ),
-                          ),
-                          elevation: 0,
-                          color: item.completed ? Colors.white : Colors.white.withOpacity(0.9),
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(24),
-                            onTap: () => context.push('/habit/${item.habit.habitId}'),
-                            child: Padding(
-                              padding: const EdgeInsets.all(12.0),
-                              child: Row(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Container(
-                                    width: 56,
-                                    height: 56,
-                                    decoration: BoxDecoration(
-                                      color: item.completed ? AppColors.success.withOpacity(0.1) : habitColor.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        item.habit.icon,
-                                        style: const TextStyle(fontSize: 28),
-                                      ),
-                                    ),
-                                  ).animate(target: item.completed ? 1 : 0).scale(duration: 300.ms, curve: Curves.backOut),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          item.habit.title,
-                                          style: TextStyle(
-                                            decoration: item.completed ? TextDecoration.lineThrough : null,
-                                            color: item.completed ? AppColors.textSecondary : AppColors.textPrimary,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 17,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        item.habit.currentStreak > 0
-                                            ? Row(
-                                                children: [
-                                                  const Icon(Icons.local_fire_department, size: 14, color: AppColors.streakFire),
-                                                  const SizedBox(width: 4),
-                                                  Text(
-                                                    '${item.habit.currentStreak} DAY STREAK',
-                                                    style: const TextStyle(
-                                                      color: AppColors.streakFire,
-                                                      fontSize: 10,
-                                                      fontWeight: FontWeight.w900,
-                                                      letterSpacing: 0.5,
-                                                    ),
-                                                  ),
-                                                ],
-                                              )
-                                            : Text(
-                                                'FORGE TODAY',
-                                                style: TextStyle(color: AppColors.textSecondary, fontSize: 10, fontWeight: FontWeight.bold),
-                                              ),
-                                      ],
+                                  Text(
+                                    'DAILY MASTERY',
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.7),
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 2,
                                     ),
                                   ),
-                                  Transform.scale(
-                                    scale: 1.3,
-                                    child: Checkbox(
-                                      value: item.completed,
-                                      activeColor: AppColors.success,
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                      onChanged: (val) {
-                                        if (val != null) {
-                                          ref.read(habitNotifierProvider.notifier).toggleHabitCompletion(
-                                                habitId: item.habit.habitId,
-                                                userId: user.uid,
-                                                date: DateTime.now(),
-                                                completed: val,
-                                              );
-                                        }
-                                      },
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '${(progress * 100).toInt()}% Complete',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                 ],
                               ),
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: const Icon(Icons.flash_on, color: Colors.white),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                          Stack(
+                            children: [
+                              Container(
+                                height: 12,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                              ),
+                              AnimatedContainer(
+                                duration: const Duration(milliseconds: 600),
+                                curve: Curves.easeOutCubic,
+                                height: 12,
+                                width: (MediaQuery.of(context).size.width - 80) * progress,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(6),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.white.withOpacity(0.5),
+                                      blurRadius: 10,
+                                      spreadRadius: 2,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            progress == 1.0 
+                              ? 'Legendary! All habits for today are forged. 🔥'
+                              : 'Keep going! $completedCount of ${habits.length} habits completed.',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
-                        )
-                        .animate(key: ValueKey('${item.habit.habitId}_${item.completed}'))
-                        .fadeIn(duration: 400.ms)
-                        .slideX(begin: 0.05)
-                        .then(delay: 100.ms)
-                        .shake(duration: item.completed ? 400.ms : 0.ms, hz: 4);
-                      },
-                      childCount: habits.length,
+                        ],
+                      ),
+                    ).animate().scale(delay: 200.ms, duration: 500.ms, curve: Curves.easeOutBack),
+                  ),
+                  if (habits.isNotEmpty)
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderListener(
+                          (context, index) {
+                            final item = habits[index];
+                            final habitColor = Color(int.parse(item.habit.color.replaceFirst('#', '0xFF')));
+
+                            return Card(
+                              margin: const EdgeInsets.only(bottom: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(24),
+                                side: BorderSide(
+                                  color: item.completed ? AppColors.success.withOpacity(0.2) : Colors.transparent,
+                                  width: 2,
+                                ),
+                              ),
+                              elevation: 0,
+                              color: item.completed ? Colors.white : Colors.white.withOpacity(0.9),
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(24),
+                                onTap: () => context.push('/habit/${item.habit.habitId}'),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12.0),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 56,
+                                        height: 56,
+                                        decoration: BoxDecoration(
+                                          color: item.completed ? AppColors.success.withOpacity(0.1) : habitColor.withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(20),
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            item.habit.icon,
+                                            style: const TextStyle(fontSize: 28),
+                                          ),
+                                        ),
+                                      ).animate(target: item.completed ? 1 : 0).scale(duration: 300.ms, curve: Curves.backOut),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              item.habit.title,
+                                              style: TextStyle(
+                                                decoration: item.completed ? TextDecoration.lineThrough : null,
+                                                color: item.completed ? AppColors.textSecondary : AppColors.textPrimary,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 17,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            item.habit.currentStreak > 0
+                                                ? Row(
+                                                    children: [
+                                                      const Icon(Icons.local_fire_department, size: 14, color: AppColors.streakFire),
+                                                      const SizedBox(width: 4),
+                                                      Text(
+                                                        '${item.habit.currentStreak} DAY STREAK',
+                                                        style: const TextStyle(
+                                                          color: AppColors.streakFire,
+                                                          fontSize: 10,
+                                                          fontWeight: FontWeight.w900,
+                                                          letterSpacing: 0.5,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  )
+                                                : Text(
+                                                    'FORGE TODAY',
+                                                    style: TextStyle(color: AppColors.textSecondary, fontSize: 10, fontWeight: FontWeight.bold),
+                                                  ),
+                                          ],
+                                        ),
+                                      ),
+                                      Transform.scale(
+                                        scale: 1.3,
+                                        child: Checkbox(
+                                          value: item.completed,
+                                          activeColor: AppColors.success,
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                          onChanged: (val) {
+                                            if (val != null) {
+                                              HapticFeedback.mediumImpact();
+                                              ref.read(habitNotifierProvider.notifier).toggleHabitCompletion(
+                                                    habitId: item.habit.habitId,
+                                                    userId: user.uid,
+                                                    date: DateTime.now(),
+                                                    completed: val,
+                                                  );
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            )
+                            .animate(key: ValueKey('${item.habit.habitId}_${item.completed}'))
+                            .fadeIn(duration: 400.ms)
+                            .slideX(begin: 0.05)
+                            .then(delay: 100.ms)
+                            .shake(duration: item.completed ? 400.ms : 0.ms, hz: 4);
+                          },
+                          childCount: habits.length,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              if (progress == 1.0)
+                IgnorePointer(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(32),
+                          decoration: BoxDecoration(
+                            color: AppColors.success.withOpacity(0.15),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.celebration_rounded,
+                            color: AppColors.success,
+                            size: 72,
+                          ),
+                        ).animate().scale(duration: 600.ms, curve: Curves.elasticOut),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'ALL HABITS FORGED! 🔥',
+                          style: TextStyle(
+                            color: AppColors.success,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 16,
+                            letterSpacing: 1,
+                          ),
+                        ).animate().fadeIn(delay: 300.ms),
+                      ],
                     ),
                   ),
                 ),

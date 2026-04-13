@@ -18,22 +18,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<Map<String, String>> _pages = [
     {
-      'title': 'Forge Better Habits',
-      'description': 'Transform your life one daily routine at a time with the power of consistency.',
+      'title': 'THE ARCHITECT OF HABIT',
+      'description': 'Stop merely tracking. Start forging. Build routines that become your identity through behavioral science.',
       'icon': '🔨',
       'color': '#2563EB',
     },
     {
-      'title': 'Smart Reinforcement',
-      'description': 'Intelligent reminders and streak tracking to keep your motivation high.',
-      'icon': '🔥',
+      'title': 'UNSTOPPABLE MOMENTUM',
+      'description': 'Fuel your discipline with streak psychology and hyper-intelligent reminders that never let you skip.',
+      'icon': '⚡',
       'color': '#F97316',
     },
     {
-      'title': 'Visual Mastery',
-      'description': 'Decode your behavior with high-fidelity analytics and progress metrics.',
-      'icon': '📊',
-      'color': '#10B981',
+      'title': 'DECODE YOUR PROGRESS',
+      'description': 'Witness your transformation with high-fidelity heatmaps and deep performance metrics.',
+      'icon': '💎',
+      'color': '#7C3AED',
     },
   ];
 
@@ -41,6 +41,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('onboarding_complete', true);
     if (mounted) {
+      HapticFeedback.heavyImpact();
       context.go(AppRoutes.login);
     }
   }

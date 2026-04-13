@@ -114,3 +114,8 @@ final todayHabitsProvider = Provider.family<
     error: (e, st) => AsyncValue.error(e, st),
   );
 });
+// Specific habit logs provider
+final habitLogsProvider =
+    FutureProvider.family<List<HabitLogModel>, String>((ref, habitId) {
+  return ref.read(habitServiceProvider).getHabitLogs(habitId);
+});

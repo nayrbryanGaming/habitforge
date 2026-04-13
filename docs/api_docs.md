@@ -1,43 +1,55 @@
-# API & Services Documentation
+# HabitForge API Documentation (Internal)
 
-Since HabitForge operates on Firebase, API interactions are handled via the Firebase SDK directly in the client application.
+While HabitForge mostly uses Firebase SDKs, specific logic is encapsulated in **Cloud Functions** and **Riverpod Services**.
 
-## 1. Firebase Collections
+## 1. Cloud Functions
 
-### Collection: `users`
-**Path:** `/users/{uid}`
-- `id` (String)
-- `email` (String)
-- `display_name` (String)
-- `subscription_status` (String: "free" | "premium")
-- `created_at` (Timestamp)
-- `fcm_token` (String?)
+### `createHabit` (Client-side trigger)
+Direct write to Firestore `habits` collection.
 
-### Collection: `habits`
-**Path:** `/habits/{habit_id}`
-- `habit_id` (String)
-- `user_id` (String)
-- `title` (String)
-- `schedule_type` (String: "daily" | "weekly")
-- `schedule_days` (Array of Ints [1,2,3,4,5,6,7])
-- `icon` (String)
-- `color` (String hex)
-- `current_streak` (Int)
-- `longest_streak` (Int)
+### `updateAnalytics` (On-write trigger)
+- **Trigger**: `onCreate` / `onDelete` in `habit_logs`.
+- **Action**: Recalculates current streak and completion rates in the `analytics` collection.
 
-### Collection: `habit_logs`
-**Path:** `/habit_logs/{habit_id}_{YYYY-MM-DD}`
-- `log_id` (String)
-- `habit_id` (String)
-- `user_id` (String)
-- `date` (Timestamp)
-- `completed` (Boolean)
+### `scheduleReminder` (Pub/Sub)
+- **Frequency**: Every 15 minutes.
+- **Action**: Checks for habits with `reminder_time` within the next window and sends FCM notifications.
 
-## 2. Cloud Functions
-- `dailyCleanup`: Scheduled CRON job running at midnight UTC.
-- `onUserDeleted`: Auth trigger. Deletes all relative `habits` and `habit_logs` connected to the `user_id`.
+## 2. Riverpod Providers (Core Services)
 
-## 3. Client Services (Flutter)
-- `AuthService`: Handles register, login, signout, password reset.
-- `HabitService`: Handles CRUD for habits and logging functionality. It computes current streaks linearly based on historical log checks.
-- `NotificationService`: Handles OS-level local scheduled notifications via `flutter_local_notifications` for exact daily reminders.
+### `AuthService`
+- `signIn(email, password)`
+- `signUp(email, password)`
+- `signOut()`
+- `deleteAccount()`
+
+### `HabitService`
+- `getHabits()`: Stream of all user habits.
+- `addHabit(Habit habit)`
+- `toggleHabit(String habitId, DateTime date)`
+- `getAnalytics(String habitId)`
+
+## 3. Firestore Schema
+
+### `users` (Collection)
+```json
+{
+  "id": "String",
+  "email": "String",
+  "createAt": "Timestamp",
+  "isPremium": "Boolean"
+}
+```
+
+### `habits` (Collection)
+```json
+{
+  "id": "String",
+  "userId": "String",
+  "title": "String",
+  "description": "String",
+  "frequency": "daily|weekly",
+  "reminderTime": "String (HH:mm)",
+  "color": "String (Hex)"
+}
+```

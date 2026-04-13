@@ -13,21 +13,26 @@ class HabitDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final habitStream = ref.watch(habitsStreamProvider);
+    final authState = ref.watch(authStateProvider);
+    final userId = authState.value?.uid ?? '';
+    final habitStream = ref.watch(habitsStreamProvider(userId));
+    final logsAsync = ref.watch(habitLogsProvider(habitId));
 
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
         title: const Text('Forge Details'),
+        centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit_note),
+            icon: const Icon(Icons.edit_outlined),
             onPressed: () => context.push(AppRoutes.editHabit.replaceFirst(':id', habitId)),
           ),
           IconButton(
             icon: const Icon(Icons.delete_outline, color: AppColors.error),
             onPressed: () => _confirmDelete(context, ref),
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: habitStream.when(
@@ -38,77 +43,117 @@ class HabitDetailScreen extends ConsumerWidget {
           final habitColor = Color(int.parse(habit.color.replaceFirst('#', '0xFF')));
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Header Profile
                 Center(
                   child: Column(
                     children: [
                       Container(
-                        width: 100,
-                        height: 100,
+                        width: 120,
+                        height: 120,
                         decoration: BoxDecoration(
                           color: habitColor.withOpacity(0.1),
                           shape: BoxShape.circle,
+                          border: Border.all(color: habitColor.withOpacity(0.2), width: 6),
                         ),
                         child: Center(
-                          child: Text(habit.icon, style: const TextStyle(fontSize: 50)),
+                          child: Text(habit.icon, style: const TextStyle(fontSize: 56)),
                         ),
                       ).animate().scale(duration: 600.ms, curve: Curves.backOut),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 20),
                       Text(
                         habit.title,
-                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+                        style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, letterSpacing: -0.5),
                       ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2),
-                      const SizedBox(height: 8),
-                      Text(
-                        'FORGING FOR ${habit.currentStreak} DAYS',
-                        style: TextStyle(
-                          color: AppColors.primary,
-                          letterSpacing: 2,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 12,
+                      if (habit.description.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          habit.description,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: AppColors.textSecondary, fontSize: 15),
                         ),
-                      ).animate().fadeIn(delay: 300.ms),
+                      ],
                     ],
                   ),
                 ),
-                const SizedBox(height: 48),
-                Text('Performance Stats', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 16),
+                const SizedBox(height: 40),
+
+                // Streak Stats
                 Row(
                   children: [
                     Expanded(
-                      child: _StatCard(
-                        label: 'Current Streak',
-                        value: '${habit.currentStreak}',
-                        icon: Icons.local_fire_department,
-                        color: AppColors.streakFire,
+                      child: _buildSummaryCard(
+                        'CURRENT',
+                        '${habit.currentStreak}',
+                        'Days Streak',
+                        AppColors.streakFire,
+                        Icons.local_fire_department_rounded,
                       ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
-                      child: _StatCard(
-                        label: 'Best Streak',
-                        value: '${habit.longestStreak}',
-                        icon: Icons.emoji_events,
-                        color: AppColors.streakGold,
+                      child: _buildSummaryCard(
+                        'BEST',
+                        '${habit.longestStreak}',
+                        'Record Streak',
+                        AppColors.streakGold,
+                        Icons.emoji_events_rounded,
                       ),
                     ),
                   ],
-                ).animate().fadeIn(delay: 400.ms).slideX(),
+                ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.1),
                 const SizedBox(height: 32),
-                Text('Consistency Heatmap', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+
+                // Heatmap & Charts
+                _buildSectionHeader('CONSISTENCY HEATMAP', Icons.grid_view_rounded),
                 const SizedBox(height: 16),
-                _buildHeatmap(habitColor).animate().fadeIn(delay: 600.ms),
+                logsAsync.when(
+                  loading: () => Container(height: 200, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24))),
+                  error: (e, s) => Text('Error loading logs: $e'),
+                  data: (logs) => _buildHeatmap(habitColor, logs).animate().fadeIn(delay: 600.ms),
+                ),
+                const SizedBox(height: 32),
+
+                _buildSectionHeader('PERFORMANCE TREND', Icons.show_chart_rounded),
+                const SizedBox(height: 20),
+                logsAsync.when(
+                  loading: () => const SizedBox(height: 150),
+                  error: (e, s) => const SizedBox(),
+                  data: (logs) => _buildTrendChart(habitColor, logs).animate().fadeIn(delay: 800.ms),
+                ),
                 const SizedBox(height: 48),
-                const Center(
-                  child: Text(
-                    'Keep forging. Your future self will thank you.',
-                    style: TextStyle(color: AppColors.textSecondary, fontStyle: FontStyle.italic),
+
+                // Motivational Quote
+                Center(
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(Icons.format_quote, color: AppColors.primary.withOpacity(0.3), size: 32),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Successful people are simply those with successful habits.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontStyle: FontStyle.italic,
+                            color: AppColors.textPrimary,
+                            height: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text('- Brian Tracy', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
+                      ],
+                    ),
                   ),
                 ),
+                const SizedBox(height: 40),
               ],
             ),
           );
@@ -117,13 +162,63 @@ class HabitDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeatmap(Color habitColor) {
+  Widget _buildSectionHeader(String title, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: AppColors.primary),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 2,
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSummaryCard(String label, String value, String subLabel, Color color, IconData icon) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(color: color.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1, color: AppColors.textSecondary)),
+              Icon(icon, color: color, size: 20),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(value, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+          Text(subLabel, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeatmap(Color habitColor, List<HabitLogModel> logs) {
+    final logMap = {for (final log in logs) DateTime(log.date.year, log.date.month, log.date.day): log.completed};
+    final now = DateTime.now();
+    final dates = List.generate(35, (i) => DateTime(now.year, now.month, now.day).subtract(Duration(days: 34 - i)));
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.border.withOpacity(0.5)),
       ),
       child: GridView.builder(
         shrinkWrap: true,
@@ -133,17 +228,52 @@ class HabitDetailScreen extends ConsumerWidget {
           crossAxisSpacing: 8,
           mainAxisSpacing: 8,
         ),
-        itemCount: 28, // Last 4 weeks
+        itemCount: dates.length,
         itemBuilder: (context, index) {
-          // Dynamic simulation of some completed days
-          final isCompleted = index % 3 != 0;
+          final date = dates[index];
+          final isCompleted = logMap[date] ?? false;
+          final isToday = date.day == now.day && date.month == now.month && date.year == now.year;
+
           return Container(
             decoration: BoxDecoration(
-              color: isCompleted ? habitColor.withOpacity(0.8) : AppColors.surfaceLight,
+              color: isCompleted ? habitColor : Colors.grey.withOpacity(0.1),
               borderRadius: BorderRadius.circular(6),
+              border: isToday ? Border.all(color: habitColor, width: 2) : null,
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildTrendChart(Color habitColor, List<HabitLogModel> logs) {
+    if (logs.isEmpty) return const SizedBox();
+
+    return SizedBox(
+      height: 150,
+      child: LineChart(
+        LineChartData(
+          gridData: const FlGridData(show: false),
+          titlesData: const FlTitlesData(show: false),
+          borderData: FlBorderData(show: false),
+          lineBarsData: [
+            LineChartBarData(
+              spots: List.generate(logs.length, (i) {
+                final log = logs[logs.length - 1 - i];
+                return FlSpot(i.toDouble(), log.completed ? 1 : 0);
+              }),
+              isCurved: true,
+              color: habitColor,
+              barWidth: 4,
+              isStrokeCapRound: true,
+              dotData: const FlDotData(show: false),
+              belowBarData: BarAreaData(
+                show: true,
+                color: habitColor.withOpacity(0.2),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -152,51 +282,19 @@ class HabitDetailScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Destroy this Habit?'),
-        content: const Text('All streaks and progress will be lost forever.'),
+        content: const Text('All streaks and progress for this habit will be lost forever.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Keep it')),
           TextButton(
             onPressed: () {
               ref.read(habitNotifierProvider.notifier).deleteHabit(habitId);
-              context.pop();
+              Navigator.pop(context); // close dialog
+              context.pop(); // go back
             },
-            child: const Text('Destroy', style: TextStyle(color: AppColors.error)),
+            child: const Text('Destroy', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.bold)),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StatCard extends StatelessWidget {
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color color;
-
-  const _StatCard({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 32),
-          const SizedBox(height: 12),
-          Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-          Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11)),
         ],
       ),
     );

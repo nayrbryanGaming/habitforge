@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import '../models/habit_model.dart';
 import '../models/habit_log_model.dart';
 import '../constants/app_constants.dart';
@@ -41,17 +42,37 @@ class HabitService {
     return habit;
   }
 
-  // Get User Habits
-  Stream<List<HabitModel>> getUserHabits(String userId) {
-    return _firestore
-        .collection(AppConstants.habitsCollection)
-        .where('user_id', isEqualTo: userId)
-        .where('is_active', isEqualTo: true)
-        .orderBy('created_at', descending: false)
-        .snapshots()
-        .map((snap) => snap.docs
+  // Get User Habits (Stream with Local Cache)
+  Stream<List<HabitModel>> getUserHabits(String userId) async* {
+    final box = Hive.box('habits_cache');
+    
+    // Yield cached data first
+    final cached = box.get(userId);
+    if (cached != null) {
+      yield (cached as List).map((e) => HabitModel.fromJson(Map<String, dynamic>.from(e))).toList();
+    }
+
+    try {
+      final snapStream = _firestore
+          .collection(AppConstants.habitsCollection)
+          .where('user_id', isEqualTo: userId)
+          .where('is_active', isEqualTo: true)
+          .orderBy('created_at', descending: false)
+          .snapshots();
+
+      await for (final snap in snapStream) {
+        final habits = snap.docs
             .map((doc) => HabitModel.fromJson({'habit_id': doc.id, ...doc.data()}))
-            .toList());
+            .toList();
+        
+        // Cache to Hive
+        await box.put(userId, habits.map((h) => h.toJson()).toList());
+        yield habits;
+      }
+    } catch (e) {
+      if (cached == null) yield [];
+      // Silently fail if offline, we've already yielded cache
+    }
   }
 
   // Update Habit
@@ -89,13 +110,23 @@ class HabitService {
       completedAt: completed ? DateTime.now() : null,
     );
 
-    await _firestore
-        .collection(AppConstants.habitLogsCollection)
-        .doc(logId)
-        .set(log.toJson(), SetOptions(merge: true));
+    // Update Local Cache
+    final box = Hive.box('logs_cache');
+    await box.put(logId, log.toJson());
 
-    // Update streak
-    await _updateStreak(habitId, userId);
+    try {
+      await _firestore
+          .collection(AppConstants.habitLogsCollection)
+          .doc(logId)
+          .set(log.toJson(), SetOptions(merge: true));
+
+      // Update streak
+      await _updateStreak(habitId, userId);
+    } catch (e) {
+      // If offline, we've already saved locally. 
+      // A sync mechanism could be added for later background sync.
+      debugPrint('Offline: Saved log locally.');
+    }
   }
 
   // Get Today's Logs
@@ -109,15 +140,33 @@ class HabitService {
         .where('is_active', isEqualTo: true)
         .get();
 
+    final box = Hive.box('logs_cache');
     final results = <String, bool>{};
 
     for (final habit in habits.docs) {
-      final logId = '${habit.id}_$dateStr';
-      final logDoc = await _firestore
-          .collection(AppConstants.habitLogsCollection)
-          .doc(logId)
-          .get();
-      results[habit.id] = logDoc.exists ? (logDoc.data()?['completed'] ?? false) : false;
+      final habitId = habit.id;
+      final logId = '${habitId}_$dateStr';
+      
+      // Try cache first
+      final cached = box.get(logId);
+      if (cached != null) {
+        results[habitId] = (cached as Map)['completed'] ?? false;
+        continue;
+      }
+
+      try {
+        final logDoc = await _firestore
+            .collection(AppConstants.habitLogsCollection)
+            .doc(logId)
+            .get();
+        final completed = logDoc.exists ? (logDoc.data()?['completed'] ?? false) : false;
+        results[habitId] = completed;
+        
+        // Cache it
+        if (logDoc.exists) await box.put(logId, logDoc.data());
+      } catch (e) {
+        results[habitId] = false;
+      }
     }
 
     return results;
@@ -172,42 +221,17 @@ class HabitService {
         .toList();
   }
 
-  // Update Streak
+  // Update Streak (Optimized)
   Future<void> _updateStreak(String habitId, String userId) async {
-    final habitDoc = await _firestore
-        .collection(AppConstants.habitsCollection)
-        .doc(habitId)
-        .get();
+    final trackingService = HabitTrackingService();
+    final results = await trackingService.calculateStreaks(habitId, userId);
 
-    if (!habitDoc.exists) return;
-
-    // Count consecutive days with completed logs
-    int streak = 0;
-    DateTime checkDate = DateTime.now();
-
-    for (int i = 0; i < 365; i++) {
-      final dateStr = '${checkDate.year}-${checkDate.month.toString().padLeft(2, '0')}-${checkDate.day.toString().padLeft(2, '0')}';
-      final logId = '${habitId}_$dateStr';
-      final log = await _firestore
-          .collection(AppConstants.habitLogsCollection)
-          .doc(logId)
-          .get();
-
-      if (log.exists && (log.data()?['completed'] ?? false)) {
-        streak++;
-        checkDate = checkDate.subtract(const Duration(days: 1));
-      } else {
-        break;
-      }
-    }
-
-    final currentLongest = habitDoc.data()?['longest_streak'] ?? 0;
     await _firestore
         .collection(AppConstants.habitsCollection)
         .doc(habitId)
         .update({
-      'current_streak': streak,
-      'longest_streak': streak > currentLongest ? streak : currentLongest,
+      'current_streak': results['currentStreak'],
+      'longest_streak': results['longestStreak'],
     });
   }
 

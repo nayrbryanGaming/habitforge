@@ -8,6 +8,18 @@ class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
+      extensions: [
+        const HabitForgeThemeExtension(
+          streakColor: Color(0xFFFF6B35),
+          heatmapColors: [
+            Color(0xFFE2E8F0), // Level 0
+            Color(0xFFDBEAFE), // Level 1
+            Color(0xFF93C5FD), // Level 2
+            Color(0xFF3B82F6), // Level 3
+            Color(0xFF1E40AF), // Level 4
+          ],
+        ),
+      ],
       brightness: Brightness.light,
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.primary,
@@ -116,6 +128,18 @@ class AppTheme {
   static ThemeData get darkTheme {
     return ThemeData(
       useMaterial3: true,
+      extensions: [
+        const HabitForgeThemeExtension(
+          streakColor: Color(0xFFF97316),
+          heatmapColors: [
+            Color(0xFF334155), // Level 0
+            Color(0xFF1E3A8A), // Level 1
+            Color(0xFF1D4ED8), // Level 2
+            Color(0xFF2563EB), // Level 3
+            Color(0xFF3B82F6), // Level 4
+          ],
+        ),
+      ],
       brightness: Brightness.dark,
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.primary,
@@ -214,6 +238,39 @@ class AppTheme {
       labelLarge: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: color),
       labelMedium: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500, color: color),
       labelSmall: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w500, color: color),
+    );
+  }
+}
+
+class HabitForgeThemeExtension extends ThemeExtension<HabitForgeThemeExtension> {
+  final Color? streakColor;
+  final List<Color>? heatmapColors;
+
+  const HabitForgeThemeExtension({
+    this.streakColor,
+    this.heatmapColors,
+  });
+
+  @override
+  ThemeExtension<HabitForgeThemeExtension> copyWith({
+    Color? streakColor,
+    List<Color>? heatmapColors,
+  }) {
+    return HabitForgeThemeExtension(
+      streakColor: streakColor ?? this.streakColor,
+      heatmapColors: heatmapColors ?? this.heatmapColors,
+    );
+  }
+
+  @override
+  ThemeExtension<HabitForgeThemeExtension> lerp(
+    ThemeExtension<HabitForgeThemeExtension>? other,
+    double t,
+  ) {
+    if (other is! HabitForgeThemeExtension) return this;
+    return HabitForgeThemeExtension(
+      streakColor: Color.lerp(streakColor, other.streakColor, t),
+      heatmapColors: heatmapColors, // Simplified for now
     );
   }
 }

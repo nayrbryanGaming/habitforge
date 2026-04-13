@@ -7,6 +7,7 @@ class HabitLogModel {
   final DateTime date;
   final bool completed;
   final DateTime? completedAt;
+  final bool synced;
 
   const HabitLogModel({
     required this.logId,
@@ -15,6 +16,7 @@ class HabitLogModel {
     required this.date,
     required this.completed,
     this.completedAt,
+    this.synced = true,
   });
 
   factory HabitLogModel.fromJson(Map<String, dynamic> json) {
@@ -31,6 +33,7 @@ class HabitLogModel {
               ? (json['completed_at'] as Timestamp).toDate()
               : DateTime.parse(json['completed_at'] as String))
           : null,
+      synced: json['synced'] as bool? ?? true,
     );
   }
 
@@ -42,6 +45,27 @@ class HabitLogModel {
       'date': Timestamp.fromDate(date),
       'completed': completed,
       'completed_at': completedAt != null ? Timestamp.fromDate(completedAt!) : null,
+      'synced': synced,
     };
+  }
+
+  HabitLogModel copyWith({
+    String? logId,
+    String? habitId,
+    String? userId,
+    DateTime? date,
+    bool? completed,
+    DateTime? completedAt,
+    bool? synced,
+  }) {
+    return HabitLogModel(
+      logId: logId ?? this.logId,
+      habitId: habitId ?? this.habitId,
+      userId: userId ?? this.userId,
+      date: date ?? this.date,
+      completed: completed ?? this.completed,
+      completedAt: completedAt ?? this.completedAt,
+      synced: synced ?? this.synced,
+    );
   }
 }

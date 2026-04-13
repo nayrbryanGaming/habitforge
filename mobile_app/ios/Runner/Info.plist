@@ -45,5 +45,19 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>FirebaseAppDelegateProxyEnabled</key>
+	<false/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>HabitForge needs access to the camera to allow you to set a profile picture.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>HabitForge needs access to your photo library to let you pick a profile image.</string>
+	<key>NSLocalNotificationsUsageDescription</key>
+	<string>We use notifications to help you forge consistent habits with timely reminders.</string>
 </dict>
 </plist>
+

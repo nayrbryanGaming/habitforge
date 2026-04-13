@@ -98,15 +98,38 @@ class AuthService {
     }
   }
 
-  // Delete Account
+  // Delete Account (Comprehensive)
   Future<void> deleteAccount() async {
     final userId = currentUser?.uid;
     if (userId == null) return;
 
-    // Delete Firestore data
-    await _firestore.collection('users').doc(userId).delete();
+    final batch = _firestore.batch();
 
-    // Delete Auth account
+    // 1. Delete user habits
+    final habits = await _firestore
+        .collection('habits')
+        .where('user_id', isEqualTo: userId)
+        .get();
+    for (final doc in habits.docs) {
+      batch.delete(doc.reference);
+    }
+
+    // 2. Delete user logs
+    final logs = await _firestore
+        .collection('habit_logs')
+        .where('user_id', isEqualTo: userId)
+        .get();
+    for (final doc in logs.docs) {
+      batch.delete(doc.reference);
+    }
+
+    // 3. Delete user profile
+    batch.delete(_firestore.collection('users').doc(userId));
+
+    // Commit batch
+    await batch.commit();
+
+    // 4. Delete Auth account
     await _auth.currentUser?.delete();
   }
 }
