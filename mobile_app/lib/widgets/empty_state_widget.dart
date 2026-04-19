@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter/material.dart';
 import '../core/theme/app_colors.dart';
 
 class ForgeEmptyState extends StatelessWidget {
@@ -30,7 +30,7 @@ class ForgeEmptyState extends StatelessWidget {
               width: 120,
               height: 120,
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.05),
+                color: AppColors.primary.withValues(alpha: 0.05),
                 shape: BoxShape.circle,
               ),
               child: Center(
@@ -39,7 +39,7 @@ class ForgeEmptyState extends StatelessWidget {
                   style: const TextStyle(fontSize: 50),
                 ),
               ),
-            ).animate().scale(duration: 600.ms, curve: Curves.backOut).shimmer(delay: 800.ms),
+            ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack).shimmer(delay: 800.ms),
             const SizedBox(height: 32),
             Text(
               title,

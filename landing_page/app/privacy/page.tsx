@@ -7,28 +7,48 @@ export default function PrivacyPolicy() {
         <Link href="/" className="text-blue-600 font-bold mb-8 block">← Back to Home</Link>
         <h1 className="text-4xl font-black text-slate-900 mb-8">Privacy Policy</h1>
         <div className="prose prose-slate max-w-none">
-          <p className="text-slate-600 mb-4">Last Updated: April 11, 2026</p>
-          <h2 className="text-2xl font-bold mt-8 mb-4">1. Introduction</h2>
+          <p className="text-slate-600 mb-8 font-bold">Last Updated: April 11, 2026</p>
+          
+          <h2 className="text-2xl font-bold mt-8 mb-4">1. Information We Collect</h2>
           <p className="text-slate-600 mb-4">
-            HabitForge ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and share information about you when you use our mobile application and website.
+            We collect information you provide directly to us (name, email) and usage data regarding your interactions with habit logs to provide a personalized experience.
           </p>
-          <h2 className="text-2xl font-bold mt-8 mb-4">2. Information We Collect</h2>
+
+          <h2 className="text-2xl font-bold mt-8 mb-4">2. Use of Data</h2>
           <p className="text-slate-600 mb-4">
-            We collect information you provide directly to us, such as when you create an account, create habits, and log your progress. This includes your name, email address, and habit data.
+            Data is used to maintain services, notify you of updates, provide support, and analyze usage patterns to improve the HabitForge experience.
           </p>
-          <h2 className="text-2xl font-bold mt-8 mb-4">3. Data Usage & Safety</h2>
+
+          <h2 className="text-2xl font-bold mt-8 mb-4">3. Data Safety & Security</h2>
           <p className="text-slate-600 mb-4">
-            Your data is used to provide and improve the HabitForge experience. We do not sell your personal data to third parties. We implement robust security measures to protect your information, including end-to-end encryption for cloud sync.
+            Your data is stored securely using Firebase (Google Cloud). We implement industry-standard encryption and security measures to protect your information.
           </p>
-          <h2 className="text-2xl font-bold mt-8 mb-4">4. GDPR & User Rights</h2>
+
+          <h2 className="text-2xl font-bold mt-8 mb-4 text-red-600">4. Account Deletion & The Right to be Forgotten</h2>
+          <div className="bg-red-50 p-6 rounded-2xl border border-red-100 mb-8">
+            <p className="text-slate-900 font-bold mb-2">Immediate and Permanent Data Purge</p>
+            <p className="text-slate-600 mb-4">
+              HabitForge respects your right to privacy. You can delete your account and all associated data at any time:
+            </p>
+            <ul className="list-disc ml-6 text-slate-600 space-y-2">
+              <li><strong>In-App:</strong> Settings → Delete Account (Instant automated purge)</li>
+              <li><strong>Web Request:</strong> Use the form in our <Link href="/#data-safety" className="text-blue-600 underline">Data Safety section</Link></li>
+              <li><strong>Email:</strong> Contact legal@habitforge.app</li>
+            </ul>
+            <p className="text-slate-600 mt-4 text-sm italic">
+              Upon confirmation, all habits, logs, streaks, analytics, and credentials are permanently erased from our production servers.
+            </p>
+          </div>
+
+          <h2 className="text-2xl font-bold mt-8 mb-4">5. Children's Privacy</h2>
           <p className="text-slate-600 mb-4">
-            Users in the European Economic Area (EEA) have certain rights under the General Data Protection Regulation (GDPR), including the right to access, correct, or delete their personal data.
+            HabitForge is not intended for children under 13. We do not knowingly collect data from children.
           </p>
-          <h2 className="text-2xl font-bold mt-8 mb-4">5. Account Deletion & Data Retention</h2>
+
+          <h2 className="text-2xl font-bold mt-8 mb-4">6. Contact Us</h2>
           <p className="text-slate-600 mb-4">
-            You have the right to delete your account and all associated data at any time. This can be done directly within the App Settings ("Delete Account" button) which triggers an automated purge of your Firestore documents and Auth records.
+            For any privacy concerns, contact us at legal@habitforge.app
           </p>
-          {/* Detailed content truncated for brevity but compliant */}
         </div>
       </div>
     </main>

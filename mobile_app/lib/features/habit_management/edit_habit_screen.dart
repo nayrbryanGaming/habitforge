@@ -1,11 +1,16 @@
+import 'dart:ui';
+import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/services/notification_service.dart';
 import '../../models/habit_model.dart';
+import '../authentication/auth_provider.dart';
 import 'habit_provider.dart';
+import '../../core/services/notification_service.dart';
 
 class EditHabitScreen extends ConsumerStatefulWidget {
   final String habitId;
@@ -63,6 +68,7 @@ class _EditHabitScreenState extends ConsumerState<EditHabitScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
+    HapticFeedback.mediumImpact();
 
     String? reminderTimeStr;
     if (_reminderTime != null) {
@@ -104,299 +110,433 @@ class _EditHabitScreenState extends ConsumerState<EditHabitScreen> {
     final authState = ref.watch(authStateProvider);
     final habitAsync = ref.watch(habitsStreamProvider(authState.value?.uid ?? ''));
 
-    return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
-      appBar: AppBar(
-        title: const Text('Edit Habit'),
-        centerTitle: true,
-      ),
-      body: habitAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error: $err')),
-        data: (habits) {
-          final habit = habits.firstWhere((h) => h.habitId == widget.habitId);
-          _initFields(habit);
-          final habitColorValue = Color(int.parse(_selectedColor.replaceFirst('#', '0xFF')));
+    return habitAsync.when(
+      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (err, stack) => Scaffold(body: Center(child: Text('Error: $err'))),
+      data: (habits) {
+        final habitIndex = habits.indexWhere((h) => h.habitId == widget.habitId);
+        if (habitIndex == -1) return const Scaffold(body: Center(child: Text('Habit not found')));
+        
+        final habit = habits[habitIndex];
+        _initFields(habit);
+        final habitColorValue = Color(int.parse(_selectedColor.replaceFirst('#', '0xFF')));
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(20.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  // Header Segment
-                  Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(30),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primary.withOpacity(0.05),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
+        return Scaffold(
+          backgroundColor: AppColors.backgroundLight,
+          body: Stack(
+            children: [
+              // Background Mesh
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.backgroundLight,
+                    gradient: LinearGradient(
+                      colors: [
+                        habitColorValue.withValues(alpha: 0.1),
+                        AppColors.backgroundLight,
                       ],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
                     ),
-                    child: Column(
-                      children: [
-                        GestureDetector(
-                          onTap: () => _showIconPicker(),
+                  ),
+                ),
+              ),
+
+              CustomScrollView(
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  // Liquid Glass AppBar
+                  SliverAppBar(
+                    expandedHeight: 180,
+                    pinned: true,
+                    stretch: true,
+                    backgroundColor: Colors.transparent,
+                    elevation: 0,
+                    leading: IconButton(
+                      icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary),
+                      onPressed: () => context.pop(),
+                    ),
+                    flexibleSpace: FlexibleSpaceBar(
+                      centerTitle: true,
+                      title: Text(
+                        'Reforge Habit',
+                        style: GoogleFonts.outfit(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 18,
+                        ),
+                      ),
+                      background: ClipRRect(
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                           child: Container(
-                            width: 100,
-                            height: 100,
                             decoration: BoxDecoration(
-                              color: habitColorValue.withOpacity(0.1),
-                              shape: BoxShape.circle,
-                              border: Border.all(color: habitColorValue.withOpacity(0.2), width: 4),
+                              gradient: LinearGradient(
+                                colors: [
+                                  habitColorValue.withValues(alpha: 0.2),
+                                  AppColors.backgroundLight.withValues(alpha: 0.5),
+                                ],
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                              ),
                             ),
                             child: Center(
-                              child: Text(_selectedIcon, style: const TextStyle(fontSize: 48)),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const SizedBox(height: 40),
+                                  GestureDetector(
+                                    onTap: _showIconPicker,
+                                    child: Container(
+                                      width: 80,
+                                      height: 80,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(24),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: habitColorValue.withValues(alpha: 0.2),
+                                            blurRadius: 20,
+                                            offset: const Offset(0, 10),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Center(
+                                        child: Text(_selectedIcon, style: const TextStyle(fontSize: 40)),
+                                      ),
+                                    ).animate().scale(curve: Curves.easeOutBack),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                        const SizedBox(height: 24),
-                        TextFormField(
-                          controller: _titleController,
-                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                          textAlign: TextAlign.center,
-                          decoration: InputDecoration(
-                            hintText: 'Habit Name',
-                            border: InputBorder.none,
-                            enabledBorder: InputBorder.none,
-                            focusedBorder: InputBorder.none,
-                            filled: false,
-                            hintStyle: TextStyle(color: AppColors.textSecondary.withOpacity(0.3)),
-                          ),
-                          validator: (val) => val == null || val.isEmpty ? 'Forgers need a name' : null,
-                        ),
-                      ],
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  
-                  // Customization Card
-                  _buildSectionCard(
-                    title: 'PERSONALIZE',
-                    child: Column(
-                      children: [
-                        const Text('Color Theme', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
-                        const SizedBox(height: 12),
-                        SizedBox(
-                          height: 44,
-                          child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: AppConstants.habitColors.length,
-                            itemBuilder: (context, i) {
-                              final color = Color(int.parse(AppConstants.habitColors[i].replaceFirst('#', '0xFF')));
-                              return GestureDetector(
-                                onTap: () {
-                                  HapticFeedback.lightImpact();
-                                  setState(() => _selectedColor = AppConstants.habitColors[i]);
-                                },
-                                child: Container(
-                                  margin: const EdgeInsets.only(right: 12),
-                                  width: 44,
-                                  decoration: BoxDecoration(
-                                    color: color,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: _selectedColor == AppConstants.habitColors[i] ? Colors.white : Colors.transparent,
-                                      width: 3,
-                                    ),
-                                    boxShadow: _selectedColor == AppConstants.habitColors[i]
-                                      ? [BoxShadow(color: color.withOpacity(0.4), blurRadius: 10, offset: const Offset(0, 4))]
-                                      : null,
-                                  ),
-                                  child: _selectedColor == AppConstants.habitColors[i]
-                                    ? const Icon(Icons.check, color: Colors.white, size: 20)
-                                    : null,
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
 
-                  // Schedule Card
-                  _buildSectionCard(
-                    title: 'RECURRENCE',
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildTypeButton(
-                                title: 'Daily',
-                                isSelected: _scheduleType == 'daily',
-                                onTap: () => setState(() => _scheduleType = 'daily'),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildTypeButton(
-                                title: 'Weekly',
-                                isSelected: _scheduleType == 'weekly',
-                                onTap: () => setState(() => _scheduleType = 'weekly'),
-                              ),
-                            ),
-                          ],
-                        ),
-                        if (_scheduleType == 'weekly') ...[
-                          const SizedBox(height: 20),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: List.generate(7, (i) {
-                              final dayInt = i + 1;
-                              final dayName = ['M', 'T', 'W', 'T', 'F', 'S', 'S'][i];
-                              final isSelected = _selectedDays.contains(dayInt);
-                              return GestureDetector(
-                                onTap: () {
-                                  HapticFeedback.selectionClick();
-                                  setState(() {
-                                    if (isSelected) {
-                                      if (_selectedDays.length > 1) _selectedDays.remove(dayInt);
-                                    } else {
-                                      _selectedDays.add(dayInt);
-                                    }
-                                  });
-                                },
-                                child: Container(
-                                  width: 38,
-                                  height: 38,
-                                  decoration: BoxDecoration(
-                                    color: isSelected ? habitColorValue : Colors.transparent,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: isSelected ? habitColorValue : AppColors.border),
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      dayName,
-                                      style: TextStyle(
-                                        color: isSelected ? Colors.white : AppColors.textSecondary,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 12,
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                    sliver: SliverList(
+                      delegate: SliverChildListDelegate([
+                        Form(
+                          key: _formKey,
+                          child: Column(
+                            children: [
+                              // Primary Info Card
+                              _buildPremiumCard(
+                                child: Column(
+                                  children: [
+                                    TextFormField(
+                                      controller: _titleController,
+                                      style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -0.5),
+                                      textAlign: TextAlign.center,
+                                      decoration: InputDecoration(
+                                        hintText: 'What will you reforge?',
+                                        border: InputBorder.none,
+                                        hintStyle: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.3)),
+                                      ),
+                                      validator: (val) => val == null || val.isEmpty ? 'The forge needs a name' : null,
+                                    ),
+                                    const Divider(height: 1),
+                                    TextFormField(
+                                      controller: _descController,
+                                      style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                                      textAlign: TextAlign.center,
+                                      maxLines: null,
+                                      decoration: InputDecoration(
+                                        hintText: 'Refine the routine...',
+                                        border: InputBorder.none,
+                                        hintStyle: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.3)),
                                       ),
                                     ),
+                                  ],
+                                ),
+                              ),
+                              
+                              const SizedBox(height: 16),
+
+                              // Customization Card
+                              _buildSectionCard(
+                                title: 'ESTHETICS',
+                                child: Column(
+                                  children: [
+                                    SizedBox(
+                                      height: 50,
+                                      child: ListView.builder(
+                                        scrollDirection: Axis.horizontal,
+                                        itemCount: AppConstants.habitColors.length,
+                                        itemBuilder: (context, i) {
+                                          final color = Color(int.parse(AppConstants.habitColors[i].replaceFirst('#', '0xFF')));
+                                          final isSelected = _selectedColor == AppConstants.habitColors[i];
+                                          return GestureDetector(
+                                            onTap: () {
+                                              HapticFeedback.lightImpact();
+                                              setState(() => _selectedColor = AppConstants.habitColors[i]);
+                                            },
+                                            child: AnimatedContainer(
+                                              duration: 300.ms,
+                                              margin: const EdgeInsets.only(right: 14),
+                                              width: 44,
+                                              decoration: BoxDecoration(
+                                                color: color,
+                                                shape: BoxShape.circle,
+                                                border: Border.all(
+                                                  color: isSelected ? Colors.white : Colors.transparent,
+                                                  width: 3,
+                                                ),
+                                                boxShadow: isSelected
+                                                  ? [BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 10, offset: const Offset(0, 4))]
+                                                  : null,
+                                              ),
+                                              child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 20) : null,
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              const SizedBox(height: 16),
+
+                              // Consistency Schedule
+                              _buildSectionCard(
+                                title: 'MOMENTUM',
+                                child: Column(
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: _buildEliteTab(
+                                            title: 'DAILY',
+                                            isSelected: _scheduleType == 'daily',
+                                            color: habitColorValue,
+                                            onTap: () => setState(() => _scheduleType = 'daily'),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: _buildEliteTab(
+                                            title: 'SELECT DAYS',
+                                            isSelected: _scheduleType == 'weekly',
+                                            color: habitColorValue,
+                                            onTap: () => setState(() => _scheduleType = 'weekly'),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    if (_scheduleType == 'weekly') ...[
+                                      const SizedBox(height: 20),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: List.generate(7, (i) {
+                                          final dayInt = i + 1;
+                                          final dayName = ['M', 'T', 'W', 'T', 'F', 'S', 'S'][i];
+                                          final isSelected = _selectedDays.contains(dayInt);
+                                          return GestureDetector(
+                                            onTap: () {
+                                              HapticFeedback.selectionClick();
+                                              setState(() {
+                                                if (isSelected) {
+                                                  if (_selectedDays.length > 1) _selectedDays.remove(dayInt);
+                                                } else {
+                                                  _selectedDays.add(dayInt);
+                                                }
+                                              });
+                                            },
+                                            child: AnimatedContainer(
+                                              duration: 200.ms,
+                                              width: 36,
+                                              height: 36,
+                                              decoration: BoxDecoration(
+                                                color: isSelected ? habitColorValue : Colors.transparent,
+                                                shape: BoxShape.circle,
+                                                border: Border.all(color: isSelected ? habitColorValue : AppColors.border),
+                                              ),
+                                              child: Center(
+                                                child: Text(
+                                                  dayName,
+                                                  style: TextStyle(
+                                                    color: isSelected ? Colors.white : AppColors.textSecondary,
+                                                    fontWeight: FontWeight.w900,
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        }),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+
+                              const SizedBox(height: 16),
+
+                              // Reminders
+                              _buildSectionCard(
+                                title: 'ARCHITECT PROMPT',
+                                child: _buildFeatureTile(
+                                  icon: Icons.notifications_active_outlined,
+                                  title: 'Scheduled Reminder',
+                                  subtitle: _reminderTime?.format(context) ?? 'No prompt set',
+                                  trailing: Switch.adaptive(
+                                    value: _reminderTime != null,
+                                    activeColor: habitColorValue,
+                                    onChanged: (val) async {
+                                      if (val) {
+                                        final time = await showTimePicker(
+                                          context: context,
+                                          initialTime: _reminderTime ?? const TimeOfDay(hour: 9, minute: 0),
+                                        );
+                                        if (time != null) setState(() => _reminderTime = time);
+                                      } else {
+                                        setState(() => _reminderTime = null);
+                                      }
+                                    },
                                   ),
                                 ),
-                              );
-                            }),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
+                              ),
 
-                  // Reminder Card
-                  _buildSectionCard(
-                    title: 'NOTIFICATIONS',
-                    child: Column(
-                      children: [
-                        _buildFeatureTile(
-                          icon: Icons.notifications_active_outlined,
-                          title: 'Daily Reminder',
-                          subtitle: _reminderTime?.format(context) ?? 'Forge without distractions',
-                          trailing: Switch(
-                            value: _reminderTime != null,
-                            activeColor: habitColorValue,
-                            onChanged: (val) async {
-                              if (val) {
-                                final time = await showTimePicker(
-                                  context: context,
-                                  initialTime: _reminderTime ?? const TimeOfDay(hour: 9, minute: 0),
-                                );
-                                if (time != null) setState(() => _reminderTime = time);
-                              } else {
-                                setState(() => _reminderTime = null);
-                              }
-                            },
+                              const SizedBox(height: 24),
+
+                              // Safety Disclaimer
+                              Container(
+                                padding: const EdgeInsets.all(18),
+                                decoration: BoxDecoration(
+                                  color: AppColors.error.withValues(alpha: 0.05),
+                                  borderRadius: BorderRadius.circular(24),
+                                  border: Border.all(color: AppColors.error.withValues(alpha: 0.1)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.shield_outlined, color: AppColors.error, size: 22),
+                                    const SizedBox(width: 14),
+                                    Expanded(
+                                      child: Text(
+                                        'HabitForge is a productivity suite. Consult a health professional before starting physical or clinical routines.',
+                                        style: GoogleFonts.inter(
+                                          color: AppColors.error.withValues(alpha: 0.8),
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                          height: 1.4,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              const SizedBox(height: 48),
+
+                              // Primary Action
+                              SizedBox(
+                                width: double.infinity,
+                                height: 64,
+                                child: ElevatedButton(
+                                  onPressed: _isLoading ? null : () => _updateHabit(habit),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: habitColorValue,
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                                  ),
+                                  child: _isLoading 
+                                      ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 3)
+                                      : const Text(
+                                          'SAVE CHANGES',
+                                          style: TextStyle(letterSpacing: 1.5, fontWeight: FontWeight.w900, fontSize: 15),
+                                        ),
+                                ),
+                              ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.2),
+                              const SizedBox(height: 40),
+                            ],
                           ),
                         ),
-                      ],
+                      ]),
                     ),
                   ),
-                  const SizedBox(height: 32),
-
-                  // Save Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 64,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : () => _updateHabit(habit),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: habitColorValue,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                        elevation: 10,
-                        shadowColor: habitColorValue.withOpacity(0.4),
-                      ),
-                      child: _isLoading 
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text('SAVE CHANGES', style: TextStyle(letterSpacing: 2, fontWeight: FontWeight.w900)),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
                 ],
               ),
-            ),
-          );
-        },
-      ),
+            ],
+          ),
+        );
+      },
     );
+  }
+
+  Widget _buildPremiumCard({required Widget child}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(28),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 40,
+            offset: const Offset(0, 20),
+          ),
+        ],
+      ),
+      child: child,
+    ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.1);
   }
 
   Widget _buildSectionCard({required String title, required Widget child}) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: AppColors.border.withOpacity(0.5)),
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.4)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: GoogleFonts.inter(
               fontSize: 11,
               fontWeight: FontWeight.w900,
-              color: AppColors.textSecondary,
+              color: AppColors.textSecondary.withValues(alpha: 0.6),
               letterSpacing: 2,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           child,
         ],
       ),
-    );
+    ).animate().fadeIn(duration: 500.ms, delay: 100.ms).slideX(begin: 0.05);
   }
 
-  Widget _buildTypeButton({required String title, required bool isSelected, required VoidCallback onTap}) {
+  Widget _buildEliteTab({required String title, required bool isSelected, required Color color, required VoidCallback onTap}) {
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
         onTap();
       },
-      child: Container(
-        height: 50,
+      child: AnimatedContainer(
+        duration: 250.ms,
+        height: 52,
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: isSelected ? AppColors.primary : AppColors.border),
+          color: isSelected ? color : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: isSelected ? color : AppColors.border),
         ),
         child: Center(
           child: Text(
             title,
             style: TextStyle(
               color: isSelected ? Colors.white : AppColors.textPrimary,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w900,
+              fontSize: 11,
+              letterSpacing: 1,
             ),
           ),
         ),
@@ -408,21 +548,21 @@ class _EditHabitScreenState extends ConsumerState<EditHabitScreen> {
     return Row(
       children: [
         Container(
-          width: 44,
-          height: 44,
+          width: 48,
+          height: 48,
           decoration: BoxDecoration(
             color: AppColors.backgroundLight,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
           ),
-          child: Icon(icon, color: AppColors.textPrimary, size: 20),
+          child: Icon(icon, color: AppColors.textPrimary, size: 22),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 18),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-              Text(subtitle, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+              Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+              Text(subtitle, style: const TextStyle(color: AppColors.textSecondary, fontSize: 14)),
             ],
           ),
         ),
@@ -435,43 +575,43 @@ class _EditHabitScreenState extends ConsumerState<EditHabitScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(36))),
       builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('CHOOSE ICON', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2, fontSize: 12)),
-            const SizedBox(height: 24),
+            Text('CHOOSE YOUR SYMBOL', style: GoogleFonts.inter(fontWeight: FontWeight.w900, letterSpacing: 2, fontSize: 11)),
+            const SizedBox(height: 32),
             GridView.builder(
               shrinkWrap: true,
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 5,
-                mainAxisSpacing: 10,
-                crossAxisSpacing: 10,
+                mainAxisSpacing: 16,
+                crossAxisSpacing: 16,
               ),
               itemCount: AppConstants.habitIcons.length,
               itemBuilder: (context, i) => GestureDetector(
                 onTap: () {
+                  HapticFeedback.lightImpact();
                   setState(() => _selectedIcon = AppConstants.habitIcons[i]);
                   Navigator.pop(context);
                 },
                 child: Container(
                   decoration: BoxDecoration(
                     color: AppColors.backgroundLight,
-                    borderRadius: BorderRadius.circular(15),
-                    border: Border.all(color: _selectedIcon == AppConstants.habitIcons[i] ? AppColors.primary : Colors.transparent),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: _selectedIcon == AppConstants.habitIcons[i] ? AppColors.primary : Colors.transparent, width: 2),
                   ),
-                  child: Center(child: Text(AppConstants.habitIcons[i], style: const TextStyle(fontSize: 24))),
+                  child: Center(child: Text(AppConstants.habitIcons[i], style: const TextStyle(fontSize: 28))),
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
           ],
         ),
       ),
     );
   }
 }
-

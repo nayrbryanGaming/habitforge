@@ -8,6 +8,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/services/notification_service.dart';
+import 'core/utils/app_logger.dart';
 
 void main() async {
   runZonedGuarded(() async {
@@ -75,8 +76,7 @@ void main() async {
 
     runApp(const ProviderScope(child: HabitForgeApp()));
   }, (error, stack) {
-    debugPrint('GLOBAL ERROR: $error');
-    debugPrint('STACK TRACE: $stack');
+    AppLogger.e('GLOBAL ERROR', error, stack);
   });
 }
 

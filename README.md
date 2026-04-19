@@ -1,115 +1,151 @@
-# 🔨 HabitForge
+# HabitForge ⚒️
 
-**Forge powerful habits one day at a time.**
+[![Build Status](https://img.shields.io/badge/Build-Production--Ready-blue?style=for-the-badge&logo=flutter)](https://github.com/nayrbryanGaming/habitforge)
+[![Flutter Version](https://img.shields.io/badge/Flutter-3.x-02569B?style=for-the-badge&logo=flutter)](https://flutter.dev)
+[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
-[![Google Play](https://img.shields.io/badge/Google_Play-Available-green?logo=googleplay&logoColor=white)](https://play.google.com/store)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Build Status](https://img.shields.io/badge/Build-Production--Ready-brightgreen)](https://github.com/nayrbryanGaming/habitforge)
+> **Forge powerful habits, one day at a time.**
 
----
-
-## 🌩️ Vision
-**HabitForge** isn't just a tracker; it's a behavioral engine. Designed for the 1%, it transforms the friction of self-improvement into the momentum of a daily routine. Using streak psychology and hyper-contextual reminders, we help you forge habits that actually stick.
-
-## 🚀 Key Features
-
-### 💎 Zen Luxury UI
-A glassmorphic dashboard designed for clarity. No clutter, just your mission for the day. Animated with micro-interactions that make completion feel rewarding.
-
-### 🔥 Streak Master Engine
-Our proprietary momentum tracker uses loss-aversion psychology to motivate you. Watch your fire grow as you forge consecutive days of excellence.
-
-### 📊 Deep Analytics
-Don't just track—understand. High-fidelity heatmaps and success-rate trends give you a biological mirror of your consistency.
-
-### 🔔 Smart Forge Reminders
-Hyper-contextual notifications that prompt you at the absolute peak of your daily habit window.
-
-### 🛡️ Privacy First
-Local-first data architecture with encrypted cloud sync. Fully compliant with GDPR and Google Play Data Safety standards.
+HabitForge is a clinical-grade habit tracking application built with Flutter and Firebase. Unlike generic tracking apps, HabitForge leverages behavioral psychology and "Streak Reinforcement" to transform intentions into long-term discipline.
 
 ---
 
-## 🛠️ Tech Stack
+## 🚀 The Vision
 
-### Frontend & Core
-- **Framework**: [Flutter](https://flutter.dev) (Latest Stable)
-- **State management**: [Riverpod](https://riverpod.dev)
-- **Navigation**: [GoRouter](https://pub.dev/packages/go_router)
-- **Animations**: [flutter_animate](https://pub.dev/packages/flutter_animate) & [Lottie](https://pub.dev/packages/lottie)
+Consistency is the raw material of greatness. HabitForge provides the "Forge" where users can refine their daily rituals, track their progress with high-fidelity analytics, and maintain discipline through an advanced reminder intelligence system.
 
-### Backend (Firebase)
-- **Auth**: Firebase Authentication (Google, Email)
-- **Database**: Cloud Firestore
-- **Serverless**: Cloud Functions (Node.js)
-- **Cloud Messaging**: FCM (Push Notifications)
-- **Analytics**: Firebase Analytics & Crashlytics
+### The Problem
+Most habit trackers fail because they are:
+- **Mechanically Complex**: Too many steps to log a simple success.
+- **Data Blind**: Lack of actionable insights into behavioral patterns.
+- **Zero Retention**: No motivation mechanics beyond simple checkboxes.
+
+### The Solution: HabitForge
+- **Minimalist Friction**: Log a habit in under 2 seconds.
+- **Behavioral Insights**: Heatmaps and streak analysis to identify peaks and plateaus.
+- **Atomic Reinforcement**: Haptic success loops and smart reminders.
 
 ---
 
-## 🏗️ System Architecture
+## ✨ Core Features
 
-Modular Feature-based Architecture for scalability:
+| Feature | Description |
+| :--- | :--- |
+| **Atomic Forge** | Create daily or weekly habits with custom scheduling. |
+| **Streak Engine** | Timezone-resilient streak calculation and "Lit" status. |
+| **Mastery Dashboard** | Weekly and monthly progress charts using `fl_chart`. |
+| **Smart Reminders** | High-priority local and push notifications. |
+| **Cloud Sync** | Seamless data persistence across devices via Firestore. |
+| **Privacy First** | Atomic Account Purge (Right to Erasure) compliance. |
+
+---
+
+## 🛠 Tech Stack
+
+- **Frontend**: Flutter (3.x) & Dart
+- **State Management**: Riverpod (Modular Architecture)
+- **Local Cache**: Hive & SharedPreferences
+- **Backend Infrastructure**:
+    - **Authentication**: Firebase Auth (Google/Email)
+    - **Database**: Cloud Firestore
+    - **Push Notifications**: Firebase Cloud Messaging (FCM)
+    - **Analytics**: Google Analytics for Firebase
+    - **Logic**: Firebase Cloud Functions (Node.js)
+
+---
+
+## 🏗 System Architecture
+
+HabitForge follows a **Feature-Based Modular Architecture** for maximum scalability and maintainability.
+
 ```mermaid
 graph TD
-    A[Mobile App - Flutter] --> B[Riverpod State Management]
-    B --> C[Firestore Service]
-    B --> D[Auth Service]
-    C --> E[Cloud Functions]
-    E --> F[Push Notification Service]
-    E --> G[Analytics Engine]
+    A[Mobile App] --> B(Firebase Auth)
+    A --> C(Cloud Firestore)
+    C --> D[Cloud Functions]
+    D --> E[FCM Service]
+    A --> F[Local Cache: Hive]
+    D --> G[Analytics Engine]
 ```
 
 ---
 
 ## 📦 Project Structure
 
-| Folder | Description |
-| :--- | :--- |
-| `mobile_app/` | Flutter Source Code (Core, Features, Models, Widgets) |
-| `backend/` | Firebase Cloud Functions and Service configurations |
-| `landing_page/` | Next.js Marketing Site (Vercel Ready) |
-| `legal/` | Production-ready Privacy Policy, ToS, and Data Safety docs |
-| `docs/` | Deep-dive Architecture, API, and Strategy guides |
-| `assets/` | High-res Logo, Screenshots, and Branding assets |
-
----
-
-## ⚡ Quick Start
-
-### 1. Prerequisites
-- Flutter SDK (3.x+)
-- Node.js (for Functions/Landing Page)
-- Firebase Account
-
-### 2. Installation
 ```bash
-# Clone the repository
-git clone https://github.com/nayrbryanGaming/habitforge
-
-# Install Flutter dependencies
-cd mobile_app
-flutter pub get
-
-# Setup Firebase (Mandatory)
-# Add your google-services.json to android/app/
-# Add your GoogleService-Info.plist to ios/Runner/
+habitforge/
+├── mobile_app/         # Flutter Core Application
+│   ├── lib/
+│   │   ├── core/       # Constants, Themes, Services, Utils
+│   │   ├── features/   # Auth, HabitTracking, Analytics, Reminders
+│   │   ├── models/     # Data Models (Freezed/JSON)
+│   │   └── widgets/    # Reusable UI Components
+├── backend/            # Firebase Functions & Services
+├── landing_page/       # Next.js / React Landing Page
+├── legal/              # Compliance Documentation (HTML/MD)
+└── assets/             # Branding Assets & Logo Prompt
 ```
 
 ---
 
-## 🛡️ Compliance & Safety
-HabitForge is built for immediate Play Store approval:
-- **Mandatory Account Deletion**: Fully automated Firestore & Auth purge flow.
-- **Data Transparency**: All collection points are documented in our [Privacy Policy](legal/privacy_policy.md).
-- **Minimum Functionality**: A feature-rich suite that exceeds Google's "Minimum Functionality" policy.
+## ⚙️ Installation
+
+1.  **Clone the Repository**
+    ```bash
+    git clone https://github.com/nayrbryanGaming/habitforge.git
+    ```
+2.  **Initialize Flutter**
+    ```bash
+    cd mobile_app
+    flutter pub get
+    ```
+3.  **Setup Firebase**
+    - Create a project on the [Firebase Console](https://console.firebase.google.com/).
+    - Download `google-services.json` (Android) and `GoogleService-Info.plist` (iOS).
+    - Place them in their respective platform directories.
+4.  **Run the App**
+    ```bash
+    flutter run
+    ```
+
+---
+
+## 💳 Monetization Strategy (Freemium)
+
+- **Standard (Free)**: Up to 5 Habits, Basic Analytics, Standard Reminders.
+- **HabitForge Pro ($4.99/mo)**: Unlimited Habits, Advanced AI Insights, iCloud/Drive Cloud Backup, Priority Support.
+
+---
+
+## ⚖️ Legal & Compliance
+
+HabitForge is explicitly designed to meet **Google Play Data Safety** requirements:
+- Full **Privacy Policy** available in `/legal/privacy_policy.html`.
+- **Right to Erasure** implemented via in-app "Delete Account" flow.
+- No third-party data selling.
+
+---
+
+## 🛣 Roadmap
+
+- [x] v1.0.0: Core Forge Engine
+- [ ] v1.1.0: Apple Watch & Widget Integration
+- [ ] v1.2.0: AI-Driven Habit Recommendations
+- [ ] v1.5.0: Community Challenges & Buddies
 
 ---
 
 ## 🤝 Contributing
-Forged by the community. Join the movement. Check our [Architecture Guide](docs/architecture.md) for contribution rules.
+
+We welcome professional community contributions that align with the "Masterpiece" engineering standard. Please open an issue first to discuss your proposal.
+
+---
 
 ## 📄 License
-Released under the [MIT License](LICENSE). 
-Copyright © 2026 HabitForge Team.
 
+This project is licensed under the MIT License.
+
+
+---
+
+**Built with ❤️ for Discipline Builders.**

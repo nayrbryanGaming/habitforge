@@ -1,24 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../features/authentication/auth_provider.dart';
-import '../core/constants/app_routes.dart';
-import '../features/authentication/login_screen.dart';
-import '../features/authentication/register_screen.dart';
-import '../features/authentication/forgot_password_screen.dart';
-import '../features/habit_management/home_screen.dart';
-import '../features/habit_management/create_habit_screen.dart';
-import '../features/habit_management/habit_detail_screen.dart';
-import '../features/habit_management/edit_habit_screen.dart';
-import '../features/analytics_dashboard/analytics_screen.dart';
-import '../features/reminders/notifications_screen.dart';
-import '../widgets/splash_screen.dart';
-import '../widgets/onboarding_screen.dart';
-import '../widgets/main_shell.dart';
-import '../widgets/profile_screen.dart';
-import '../widgets/premium_screen.dart';
-import '../widgets/settings_screen.dart';
-import '../widgets/about_screen.dart';
+import '../../features/authentication/auth_provider.dart';
+import '../constants/app_routes.dart';
+import '../../features/authentication/login_screen.dart';
+import '../../features/authentication/register_screen.dart';
+import '../../features/authentication/forgot_password_screen.dart';
+import '../../features/habit_management/home_screen.dart';
+import '../../features/habit_management/create_habit_screen.dart';
+import '../../features/habit_management/habit_detail_screen.dart';
+import '../../features/habit_management/edit_habit_screen.dart';
+import '../../features/analytics_dashboard/analytics_screen.dart';
+import '../../features/reminders/notifications_screen.dart';
+import '../../widgets/splash_screen.dart';
+import '../../widgets/onboarding_screen.dart';
+import '../../widgets/main_shell.dart';
+import '../../features/profile/profile_screen.dart';
+import '../../widgets/premium_screen.dart';
+
+import '../../widgets/settings_screen.dart';
+import '../../widgets/about_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);

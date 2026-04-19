@@ -1,10 +1,18 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/constants/app_routes.dart';
+import '../../models/habit_log_model.dart';
+import '../authentication/auth_provider.dart';
 import 'habit_provider.dart';
+import '../../widgets/glass_card.dart';
+
 
 class HabitDetailScreen extends ConsumerWidget {
   final String habitId;
@@ -18,146 +26,250 @@ class HabitDetailScreen extends ConsumerWidget {
     final habitStream = ref.watch(habitsStreamProvider(userId));
     final logsAsync = ref.watch(habitLogsProvider(habitId));
 
-    return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
-      appBar: AppBar(
-        title: const Text('Forge Details'),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit_outlined),
-            onPressed: () => context.push(AppRoutes.editHabit.replaceFirst(':id', habitId)),
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete_outline, color: AppColors.error),
-            onPressed: () => _confirmDelete(context, ref),
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: habitStream.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error: $err')),
-        data: (habits) {
-          final habit = habits.firstWhere((h) => h.habitId == habitId);
-          final habitColor = Color(int.parse(habit.color.replaceFirst('#', '0xFF')));
+    return habitStream.when(
+      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (err, stack) => Scaffold(body: Center(child: Text('Error: $err'))),
+      data: (habits) {
+        final habitIndex = habits.indexWhere((h) => h.habitId == habitId);
+        if (habitIndex == -1) return const Scaffold(body: Center(child: Text('Habit not found')));
+        
+        final habit = habits[habitIndex];
+        final habitColor = Color(int.parse(habit.color.replaceFirst('#', '0xFF')));
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header Profile
-                Center(
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 120,
-                        height: 120,
-                        decoration: BoxDecoration(
-                          color: habitColor.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                          border: Border.all(color: habitColor.withOpacity(0.2), width: 6),
-                        ),
-                        child: Center(
-                          child: Text(habit.icon, style: const TextStyle(fontSize: 56)),
-                        ),
-                      ).animate().scale(duration: 600.ms, curve: Curves.backOut),
-                      const SizedBox(height: 20),
-                      Text(
-                        habit.title,
-                        style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, letterSpacing: -0.5),
-                      ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2),
-                      if (habit.description.isNotEmpty) ...[
-                        const SizedBox(height: 8),
-                        Text(
-                          habit.description,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: AppColors.textSecondary, fontSize: 15),
-                        ),
-                      ],
-                    ],
+        return Scaffold(
+          backgroundColor: AppColors.backgroundLight,
+          body: Stack(
+            children: [
+              // Background Accents
+              Positioned(
+                top: -100,
+                right: -50,
+                child: Container(
+                  width: 300,
+                  height: 300,
+                  decoration: BoxDecoration(
+                    color: habitColor.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
                   ),
-                ),
-                const SizedBox(height: 40),
+                ).animate(onPlay: (c) => c.repeat(reverse: true)).scale(duration: 3.seconds, curve: Curves.easeInOut),
+              ),
 
-                // Streak Stats
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildSummaryCard(
-                        'CURRENT',
-                        '${habit.currentStreak}',
-                        'Days Streak',
-                        AppColors.streakFire,
-                        Icons.local_fire_department_rounded,
+              CustomScrollView(
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  // Liquid Glass AppBar
+                  SliverAppBar(
+                    expandedHeight: 240,
+                    pinned: true,
+                    stretch: true,
+                    backgroundColor: Colors.transparent,
+                    elevation: 0,
+                    leading: IconButton(
+                      icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary),
+                      onPressed: () => context.pop(),
+                    ),
+                    actions: [
+                      _buildAppBarAction(
+                        icon: Icons.edit_outlined,
+                        onTap: () => context.push(AppRoutes.editHabit.replaceFirst(':id', habitId)),
                       ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildSummaryCard(
-                        'BEST',
-                        '${habit.longestStreak}',
-                        'Record Streak',
-                        AppColors.streakGold,
-                        Icons.emoji_events_rounded,
+                      const SizedBox(width: 8),
+                      _buildAppBarAction(
+                        icon: Icons.delete_outline,
+                        color: AppColors.error,
+                        onTap: () => _confirmDelete(context, ref),
                       ),
-                    ),
-                  ],
-                ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.1),
-                const SizedBox(height: 32),
-
-                // Heatmap & Charts
-                _buildSectionHeader('CONSISTENCY HEATMAP', Icons.grid_view_rounded),
-                const SizedBox(height: 16),
-                logsAsync.when(
-                  loading: () => Container(height: 200, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24))),
-                  error: (e, s) => Text('Error loading logs: $e'),
-                  data: (logs) => _buildHeatmap(habitColor, logs).animate().fadeIn(delay: 600.ms),
-                ),
-                const SizedBox(height: 32),
-
-                _buildSectionHeader('PERFORMANCE TREND', Icons.show_chart_rounded),
-                const SizedBox(height: 20),
-                logsAsync.when(
-                  loading: () => const SizedBox(height: 150),
-                  error: (e, s) => const SizedBox(),
-                  data: (logs) => _buildTrendChart(habitColor, logs).animate().fadeIn(delay: 800.ms),
-                ),
-                const SizedBox(height: 48),
-
-                // Motivational Quote
-                Center(
-                  child: Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.05),
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: Column(
-                      children: [
-                        Icon(Icons.format_quote, color: AppColors.primary.withOpacity(0.3), size: 32),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'Successful people are simply those with successful habits.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontStyle: FontStyle.italic,
-                            color: AppColors.textPrimary,
-                            height: 1.5,
+                      const SizedBox(width: 16),
+                    ],
+                    flexibleSpace: FlexibleSpaceBar(
+                      background: ClipRRect(
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  habitColor.withValues(alpha: 0.15),
+                                  AppColors.backgroundLight,
+                                ],
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                              ),
+                            ),
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const SizedBox(height: 40),
+                                  Container(
+                                    width: 100,
+                                    height: 100,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(30),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: habitColor.withValues(alpha: 0.2),
+                                          blurRadius: 30,
+                                          offset: const Offset(0, 15),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Center(
+                                      child: Text(habit.icon, style: const TextStyle(fontSize: 48)),
+                                    ),
+                                  ).animate().scale(curve: Curves.easeOutBack),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    habit.title,
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.w900,
+                                      color: AppColors.textPrimary,
+                                      letterSpacing: -0.5,
+                                    ),
+                                  ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    habit.description.isNotEmpty ? habit.description : 'Your path to mastery begins with this first step. Keep the forge lit.',
+                                    textAlign: TextAlign.center,
+                                    style: GoogleFonts.inter(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        const Text('- Brian Tracy', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 40),
-              ],
-            ),
-          );
-        },
+
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                    sliver: SliverList(
+                      delegate: SliverChildListDelegate([
+                        // Summary Stats
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildSummaryCard(
+                                'CURRENT STREAK',
+                                '${habit.currentStreak}',
+                                'UNSTOPPABLE',
+                                AppColors.streakFire,
+                                Icons.local_fire_department_rounded,
+                              ),
+                            ),
+                            const SizedBox(width: 20),
+                            Expanded(
+                              child: _buildSummaryCard(
+                                'ELITE RECORD',
+                                '${habit.longestStreak}',
+                                'THE BENCHMARK',
+                                AppColors.streakGold,
+                                Icons.emoji_events_rounded,
+                              ),
+                            ),
+                          ],
+                        ),
+                        
+                        const SizedBox(height: 32),
+
+                        // Momentum Heatmap
+                        _buildSectionHeader('CONSISTENCY GRID', Icons.grid_view_rounded),
+                        const SizedBox(height: 16),
+                        logsAsync.when(
+                          loading: () => _buildGlassContainer(height: 200, child: const Center(child: CircularProgressIndicator())),
+                          error: (e, s) => Text('Error: $e'),
+                          data: (logs) => _buildHeatmap(habitColor, logs).animate().fadeIn(duration: 600.ms),
+                        ),
+
+                        const SizedBox(height: 32),
+
+                        // Performance Trend
+                        _buildSectionHeader('PERFORMANCE FLOW', Icons.auto_graph_rounded),
+                        const SizedBox(height: 20),
+                        logsAsync.when(
+                          loading: () => const SizedBox(height: 180),
+                          error: (e, s) => const SizedBox(),
+                          data: (logs) => _buildTrendChart(habitColor, logs).animate().fadeIn(duration: 800.ms),
+                        ),
+
+                        const SizedBox(height: 48),
+
+                        // Philosophical Reinforcement
+                        GlassCard(
+                          color: habitColor,
+                          opacity: 0.05,
+                          child: Container(
+                            padding: const EdgeInsets.all(32),
+                            child: Column(
+                              children: [
+                                Icon(Icons.format_quote_rounded, color: habitColor.withValues(alpha: 0.3), size: 48),
+                                const SizedBox(height: 16),
+                                Text(
+                                  '"We are what we repeatedly do. Excellence, then, is not an act, but a habit."',
+                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.textPrimary,
+                                    height: 1.5,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: habitColor.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Text(
+                                    'ARISTOTLE',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w900,
+                                      color: AppColors.textSecondary,
+                                      letterSpacing: 3,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 40),
+                      ]),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAppBarAction({required IconData icon, required VoidCallback onTap, Color? color}) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: AppColors.premiumShadow,
+      ),
+      child: IconButton(
+        icon: Icon(icon, color: color ?? AppColors.textPrimary, size: 20),
+        onPressed: onTap,
       ),
     );
   }
@@ -165,14 +277,14 @@ class HabitDetailScreen extends ConsumerWidget {
   Widget _buildSectionHeader(String title, IconData icon) {
     return Row(
       children: [
-        Icon(icon, size: 18, color: AppColors.primary),
+        Icon(icon, size: 14, color: AppColors.primary),
         const SizedBox(width: 8),
         Text(
           title,
-          style: const TextStyle(
-            fontSize: 12,
+          style: GoogleFonts.outfit(
+            fontSize: 11,
             fontWeight: FontWeight.w900,
-            letterSpacing: 2,
+            letterSpacing: 2.5,
             color: AppColors.textSecondary,
           ),
         ),
@@ -182,13 +294,12 @@ class HabitDetailScreen extends ConsumerWidget {
 
   Widget _buildSummaryCard(String label, String value, String subLabel, Color color, IconData icon) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(color: color.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: AppColors.premiumShadow,
+        border: Border.all(color: color.withValues(alpha: 0.1), width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -196,51 +307,79 @@ class HabitDetailScreen extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1, color: AppColors.textSecondary)),
-              Icon(icon, color: color, size: 20),
+              Text(label, style: GoogleFonts.outfit(fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5, color: AppColors.textSecondary)),
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
+                child: Icon(icon, color: color, size: 16),
+              ),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(value, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-          Text(subLabel, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+          const SizedBox(height: 16),
+          Text(
+            value, 
+            style: GoogleFonts.outfit(fontSize: 44, fontWeight: FontWeight.w900, letterSpacing: -1.5, color: AppColors.textPrimary)
+          ),
+          const SizedBox(height: 4),
+          Text(subLabel, style: GoogleFonts.outfit(fontSize: 9, fontWeight: FontWeight.w900, color: color, letterSpacing: 1.5)),
         ],
       ),
+    );
+  }
+
+  Widget _buildGlassContainer({required double height, required Widget child}) {
+    return Container(
+      height: height,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: AppColors.premiumShadow,
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.5), width: 1.5),
+      ),
+      child: child,
     );
   }
 
   Widget _buildHeatmap(Color habitColor, List<HabitLogModel> logs) {
     final logMap = {for (final log in logs) DateTime(log.date.year, log.date.month, log.date.day): log.completed};
     final now = DateTime.now();
-    final dates = List.generate(35, (i) => DateTime(now.year, now.month, now.day).subtract(Duration(days: 34 - i)));
+    final startOfPeriod = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 34));
+    final dates = List.generate(35, (i) => startOfPeriod.add(Duration(days: i)));
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.border.withOpacity(0.5)),
+        borderRadius: BorderRadius.circular(36),
+        boxShadow: AppColors.premiumShadow,
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.4), width: 1.5),
       ),
       child: GridView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 7,
-          crossAxisSpacing: 8,
-          mainAxisSpacing: 8,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
         ),
         itemCount: dates.length,
         itemBuilder: (context, index) {
           final date = dates[index];
-          final isCompleted = logMap[date] ?? false;
+          final isCompleted = logMap[DateTime(date.year, date.month, date.day)] ?? false;
           final isToday = date.day == now.day && date.month == now.month && date.year == now.year;
 
-          return Container(
+          return AnimatedContainer(
+            duration: 500.ms,
             decoration: BoxDecoration(
-              color: isCompleted ? habitColor : Colors.grey.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(6),
-              border: isToday ? Border.all(color: habitColor, width: 2) : null,
+              color: isCompleted ? habitColor : AppColors.backgroundLight,
+              borderRadius: BorderRadius.circular(12),
+              border: isToday ? Border.all(color: habitColor, width: 2.5) : null,
+              boxShadow: isCompleted 
+                  ? [BoxShadow(color: habitColor.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4))]
+                  : null,
             ),
-          );
+          ).animate(delay: (index * 15).ms).scale(duration: 400.ms, curve: Curves.easeOutBack);
         },
       ),
     );
@@ -249,8 +388,15 @@ class HabitDetailScreen extends ConsumerWidget {
   Widget _buildTrendChart(Color habitColor, List<HabitLogModel> logs) {
     if (logs.isEmpty) return const SizedBox();
 
-    return SizedBox(
-      height: 150,
+    return Container(
+      height: 220,
+      padding: const EdgeInsets.fromLTRB(16, 32, 32, 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: AppColors.premiumShadow,
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.4), width: 1.5),
+      ),
       child: LineChart(
         LineChartData(
           gridData: const FlGridData(show: false),
@@ -264,12 +410,19 @@ class HabitDetailScreen extends ConsumerWidget {
               }),
               isCurved: true,
               color: habitColor,
-              barWidth: 4,
+              barWidth: 8,
               isStrokeCapRound: true,
               dotData: const FlDotData(show: false),
               belowBarData: BarAreaData(
                 show: true,
-                color: habitColor.withOpacity(0.2),
+                gradient: LinearGradient(
+                  colors: [
+                    habitColor.withValues(alpha: 0.4),
+                    habitColor.withValues(alpha: 0.0),
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
               ),
             ),
           ],
@@ -279,24 +432,63 @@ class HabitDetailScreen extends ConsumerWidget {
   }
 
   void _confirmDelete(BuildContext context, WidgetRef ref) {
-    showDialog(
+    HapticFeedback.mediumImpact();
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Destroy this Habit?'),
-        content: const Text('All streaks and progress for this habit will be lost forever.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Keep it')),
-          TextButton(
-            onPressed: () {
-              ref.read(habitNotifierProvider.notifier).deleteHabit(habitId);
-              Navigator.pop(context); // close dialog
-              context.pop(); // go back
-            },
-            child: const Text('Destroy', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.bold)),
-          ),
-        ],
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(40))),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(40),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(color: AppColors.error.withValues(alpha: 0.1), shape: BoxShape.circle),
+              child: const Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 48),
+            ),
+            const SizedBox(height: 24),
+            Text('ABANDON THIS FORGE?', style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
+            const SizedBox(height: 16),
+            const Text(
+              'All data, streaks, and architectural history for this habit will be permanently deleted. This action cannot be undone.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.textSecondary, height: 1.6, fontWeight: FontWeight.w500, fontSize: 15),
+            ),
+            const SizedBox(height: 32),
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text('KEEP IT', style: GoogleFonts.outfit(color: AppColors.textPrimary, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      ref.read(habitNotifierProvider.notifier).deleteHabit(habitId);
+                      Navigator.pop(context); // close sheet
+                      context.pop(); // go back
+                      HapticFeedback.heavyImpact();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.error,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                      padding: const EdgeInsets.symmetric(vertical: 20),
+                    ),
+                    child: Text('EXTINGUISH', style: GoogleFonts.outfit(fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
+
 }

@@ -3,7 +3,17 @@ class AppConstants {
 
   static const String appName = 'HabitForge';
   static const String appTagline = 'Forge powerful habits one day at a time.';
-  static const String appVersion = '1.0.0';
+  static const String appVersion = '1.0.0+18';
+
+  // Support & URLs
+  static const String supportEmail = 'support@habitforge.app';
+  static const String legalEmail = 'legal@habitforge.app';
+  static const String websiteUrl = 'https://habitforge.app';
+  static const String privacyPolicyUrl = 'https://habitforge.app/privacy';
+  static const String termsOfServiceUrl = 'https://habitforge.app/terms';
+  static const String dataUsageUrl = 'https://habitforge.app/data-safety';
+  static const String disclaimerUrl = 'https://habitforge.app/disclaimer';
+
 
   // Firestore Collections
   static const String usersCollection = 'users';

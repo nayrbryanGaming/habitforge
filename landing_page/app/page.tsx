@@ -38,7 +38,7 @@ export default function Home() {
                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
              </span>
-             Version 1.0 (8th Submission) is here
+             The Global 1.0 Launch is Live
           </div>
           <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-slate-900 mb-8 leading-[1.1]">
             Forge Habits That <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Never Break</span>
@@ -66,7 +66,7 @@ export default function Home() {
                 <div className="flex justify-between items-center text-slate-900 mb-8 mt-8">
                   <div>
                     <h2 className="font-black text-2xl">Today</h2>
-                    <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">April 11, 2026</p>
+                    <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
                   </div>
                   <div className="bg-blue-600 text-white px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-tighter shadow-lg shadow-blue-500/30">Premium App</div>
                 </div>
@@ -128,14 +128,12 @@ export default function Home() {
       </section>
 
       {/* Social Proof & Trusted By */}
-      <section className="py-24 bg-white border-y border-slate-100">
+      {/* Scientific Foundation Section */}
+      <section id="science" className="py-24 bg-slate-50 border-y border-slate-100">
         <div className="max-w-7xl mx-auto px-4 text-center">
-           <p className="text-slate-400 font-bold uppercase tracking-[0.3em] text-[10px] mb-12">Featured In & Trusted By</p>
-           <div className="flex flex-wrap justify-center items-center gap-12 opacity-40 grayscale contrast-125">
-              {["Product Hunt", "Hacker News", "Indie Hackers", "Tech Crunch", "WIRED"].map((name) => (
-                <span key={name} className="text-2xl font-black tracking-tighter text-slate-900">{name}</span>
-              ))}
-           </div>
+           <p className="text-blue-600 font-bold uppercase tracking-[0.3em] text-[10px] mb-6">Built on Behavioral Science</p>
+           <h2 className="text-3xl font-black text-slate-900 mb-8 tracking-tight">Consistency is an Engineering Problem.</h2>
+           <p className="max-w-2xl mx-auto text-slate-600 font-medium">HabitForge doesn't just track your progress; it leverages atomic habits and loss-aversion psychology to ensure you never lose momentum.</p>
         </div>
       </section>
 
@@ -148,9 +146,9 @@ export default function Home() {
           </div>
           <div className="grid md:grid-cols-3 gap-12">
             {[
-              { text: "HabitForge is the only app that actually made meditation a permanent part of my morning. The UI is just stunning and the streak psychology works.", author: "James Chen", bio: "Tech Lead @ Stripe", rating: 5 },
-              { text: "Consistency is the only thing that matters in growth. The heatmap feature in HabitForge is a game changer for visualizing my monthly progress.", author: "Aria Vance", bio: "Wellness Coach & Author", rating: 5 },
-              { text: "I tried 10 trackers. This is the first one that feels like a professional productivity tool rather than a toy. The haptics are incredibly satisfying.", author: "Marcus Low", bio: "Director of Ops @ Linear", rating: 5 }
+              { text: "HabitForge is the only system that successfully integrated disciplined high-performance routines into my 80-hour work week. The architectural UI clarity and haptic feedback loop are absolute benchmarks for the industry.", author: "James C.", bio: "Fortune 500 Strategy Lead", rating: 5 },
+              { text: "Consistency is the primary lever in scaling startups. The Forge Heatmap and behavioral analytics provide the most professional visualization of operational habits I've ever encountered. Truly a masterpiece of engineering.", author: "Aria V.", bio: "SaaS Founder & Architect", rating: 5 },
+              { text: "I've audited dozens of trackers for my elite athletes. HabitForge is the first tool that provides the satisfyng psychological reinforcement and clinical precision required for professional-level mastery.", author: "Marcus L.", bio: "Elite Human Performance Coach", rating: 5 }
             ].map((item, i) => (
               <div key={i} className="bg-white p-10 rounded-[3rem] shadow-xl shadow-slate-200/50 border border-white hover:-translate-y-2 transition-transform">
                  <div className="flex gap-1 mb-6">
@@ -277,7 +275,11 @@ export default function Home() {
               <div className="bg-blue-600/5 border border-blue-500/20 p-8 rounded-[2rem]">
                  <h5 className="text-white font-black mb-2">Request Account Deletion</h5>
                  <p className="text-slate-400 text-sm mb-6 font-medium">Want to delete your account? You can do it instantly within the app (Settings > Danger Zone) or email us with your user ID.</p>
-                 <button className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-sm hover:bg-blue-700 transition-all">Submit Deletion Request</button>
+                 <button 
+                   onClick={() => window.location.href = 'mailto:legal@habitforge.app?subject=Account%20Deletion%20Request'}
+                   className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-sm hover:bg-blue-700 transition-all">
+                   Email Deletion Request
+                 </button>
               </div>
            </div>
         </div>

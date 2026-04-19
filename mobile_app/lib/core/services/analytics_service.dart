@@ -1,21 +1,75 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
 import '../../models/analytics_model.dart';
 import '../../models/habit_model.dart';
 
 class AnalyticsService {
+  static final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
+
+  static Future<void> logHabitCreated(HabitModel habit) async {
+    await _analytics.logEvent(
+      name: 'habit_created',
+      parameters: {
+        'id': habit.habitId,
+        'title': habit.title,
+        'schedule': habit.scheduleType,
+      },
+    );
+  }
+
+  static Future<void> logHabitCompleted(String habitId, String title) async {
+    await _analytics.logEvent(
+      name: 'habit_completed',
+      parameters: {
+        'id': habitId,
+        'title': title,
+      },
+    );
+  }
+
+  static Future<void> logLevelUp(int streak) async {
+    await _analytics.logLevelUp(level: streak);
+  }
+
   static String getForgeInsight(AnalyticsModel data) {
     if (data.totalHabits == 0) return "Forge your first habit to start the mastery journey.";
-    
-    if (data.weeklyCompletionRate >= 0.9) {
-      return "LEGENDARY consistency. Your architect's vision is becoming reality. Keep this momentum!";
-    } else if (data.weeklyCompletionRate >= 0.7) {
-      return "Strong progress! You're forging a solid middle-ground. Focusing on morning habits might push you to 90%.";
-    } else if (data.weeklyCompletionRate >= 0.4) {
-      return "You're building the foundation. The key is to never skip two days in a row. Forge ahead!";
-    } else if (data.weeklyCompletionRate > 0) {
-      return "Resistance is natural. Start with small, microscopic wins today to break the cycle.";
-    } else {
-      return "The forge is cold. Light the match today with one small task.";
-    }
+
+    final rate = data.weeklyCompletionRate;
+    final intensity = data.forgeIntensity.toLowerCase();
+
+    // Mapping of insights based on intensity and rate
+    final Map<String, Map<String, String>> responseMatrix = {
+      'mindful': {
+        'legendary': "Peaceful progress. Your consistency is like a calm river—effortless and powerful. Maintain this flow.",
+        'strong': "You are finding your rhythm. Focus on the breath between tasks to solidify this foundation.",
+        'foundation': "Be kind to your progress. You're building the base. Every small entry is a victory for the soul.",
+        'cycle': "Observation without judgment. Notice the gaps and gently return to your practice today.",
+        'cold': "The forge is resting. Gently light a small spark today when you are ready."
+      },
+      'balanced': {
+        'legendary': "LEGENDARY consistency. Your architect's vision is becoming reality. Keep this momentum!",
+        'strong': "Strong progress! You're forging a solid middle-ground. Focusing on morning habits might push you to 90%.",
+        'foundation': "You're building the foundation. The key is to never skip two days in a row. Forge ahead!",
+        'cycle': "Resistance is natural. Start with small, microscopic wins today to break the cycle.",
+        'cold': "The forge is cold. Light the match today with one small task."
+      },
+      'aggressive': {
+        'legendary': "ABSOLUTE DOMINANCE. You are outperforming 99% of forgers. Do not let up. Push harder.",
+        'strong': "GOOD, but not great. That 30% gap is where weakness hides. Close it today.",
+        'foundation': "MEDIOCRE. Foundations are for building, not staying. Increase the heat immediately.",
+        'cycle': "EXCUSES. The cycle is a cage. Break it with raw discipline right now.",
+        'cold': "PATHETIC. The forge is dead. Reboot your discipline or accept defeat."
+      }
+    };
+
+    final level = intensity == 'mindful' ? 'mindful' : (intensity == 'aggressive' ? 'aggressive' : 'balanced');
+    String feedbackKey;
+    if (rate >= 0.9) feedbackKey = 'legendary';
+    else if (rate >= 0.7) feedbackKey = 'strong';
+    else if (rate >= 0.4) feedbackKey = 'foundation';
+    else if (rate > 0) feedbackKey = 'cycle';
+    else feedbackKey = 'cold';
+
+    return responseMatrix[level]![feedbackKey]!;
   }
 
   static List<Map<String, dynamic>> calculateMasteryBadges(AnalyticsModel data) {

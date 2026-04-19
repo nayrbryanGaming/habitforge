@@ -5,6 +5,7 @@ class HabitLogModel {
   final String habitId;
   final String userId;
   final DateTime date;
+  final String dateString;
   final bool completed;
   final DateTime? completedAt;
   final bool synced;
@@ -14,6 +15,7 @@ class HabitLogModel {
     required this.habitId,
     required this.userId,
     required this.date,
+    required this.dateString,
     required this.completed,
     this.completedAt,
     this.synced = true,
@@ -27,6 +29,9 @@ class HabitLogModel {
       date: json['date'] is Timestamp
           ? (json['date'] as Timestamp).toDate()
           : DateTime.parse(json['date'] as String),
+      dateString: json['date_string'] as String? ?? (json['date'] is Timestamp 
+          ? (json['date'] as Timestamp).toDate().toIso8601String().split('T')[0]
+          : (json['date'] as String).split('T')[0]),
       completed: json['completed'] as bool? ?? false,
       completedAt: json['completed_at'] != null
           ? (json['completed_at'] is Timestamp
@@ -43,6 +48,7 @@ class HabitLogModel {
       'habit_id': habitId,
       'user_id': userId,
       'date': Timestamp.fromDate(date),
+      'date_string': dateString,
       'completed': completed,
       'completed_at': completedAt != null ? Timestamp.fromDate(completedAt!) : null,
       'synced': synced,
@@ -54,6 +60,7 @@ class HabitLogModel {
     String? habitId,
     String? userId,
     DateTime? date,
+    String? dateString,
     bool? completed,
     DateTime? completedAt,
     bool? synced,
@@ -63,6 +70,7 @@ class HabitLogModel {
       habitId: habitId ?? this.habitId,
       userId: userId ?? this.userId,
       date: date ?? this.date,
+      dateString: dateString ?? this.dateString,
       completed: completed ?? this.completed,
       completedAt: completedAt ?? this.completedAt,
       synced: synced ?? this.synced,

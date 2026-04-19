@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
-import '../core/constants/app_routes.dart';
-import '../core/theme/app_colors.dart';
-import '../features/authentication/auth_provider.dart';
-import '../features/habit_management/habit_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../core/constants/app_routes.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/utils/app_logger.dart';
+import '../authentication/auth_provider.dart';
+import '../habit_management/habit_provider.dart';
+
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -14,6 +17,20 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final userAsync = ref.watch(currentUserProvider);
     final user = userAsync.value;
+
+    ref.listen(authNotifierProvider, (previous, next) {
+      next.whenOrNull(
+        error: (error, stack) {
+          if (error.toString().contains('requires-recent-login')) {
+            _showReauthMessage(context, ref);
+          } else {
+             ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Error: ${error.toString()}')),
+            );
+          }
+        },
+      );
+    });
 
     return Scaffold(
       body: user == null
@@ -39,7 +56,7 @@ class ProfileScreen extends ConsumerWidget {
                               user.displayName.isNotEmpty ? user.displayName[0].toUpperCase() : 'U',
                               style: const TextStyle(fontSize: 40, color: Colors.white, fontWeight: FontWeight.bold),
                             ),
-                          ).animate().scale(duration: 600.ms, curve: Curves.backOut),
+                          ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
                           const SizedBox(height: 12),
                           Text(
                             user.displayName,
@@ -47,7 +64,7 @@ class ProfileScreen extends ConsumerWidget {
                           ).animate().fadeIn(delay: 200.ms),
                           Text(
                             user.email,
-                            style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.7)),
+                            style: TextStyle(fontSize: 14, color: Colors.white.withValues(alpha: 0.7)),
                           ).animate().fadeIn(delay: 300.ms),
                         ],
                       ),
@@ -66,7 +83,7 @@ class ProfileScreen extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildStatsRow(ref, user.uid),
+                        _buildStatsRow(ref, user.id),
                         const SizedBox(height: 32),
                         Text(
                           'Account Management',
@@ -81,6 +98,24 @@ class ProfileScreen extends ConsumerWidget {
                           onTap: () => context.push(AppRoutes.premium),
                           trailing: const Icon(Icons.chevron_right),
                           iconColor: AppColors.streakGold,
+                        ),
+                        const Divider(),
+                        _buildSettingsItem(
+                          context,
+                          Icons.shield_outlined,
+                          'Privacy Policy',
+                          'Read our privacy policy',
+                          onTap: () => _launchUrl('https://habitforge.app/privacy'),
+                          trailing: const Icon(Icons.chevron_right),
+                        ),
+                        const Divider(),
+                        _buildSettingsItem(
+                          context,
+                          Icons.delete_forever_outlined,
+                          'Request Data Deletion',
+                          'External link to our web portal',
+                          onTap: () => _launchUrl('https://habitforge.app/#data-safety'),
+                          trailing: const Icon(Icons.chevron_right),
                         ),
                         const Divider(),
                         _buildSettingsItem(
@@ -112,7 +147,7 @@ class ProfileScreen extends ConsumerWidget {
                         const SizedBox(height: 48),
                         const Center(
                           child: Text(
-                            'HabitForge v1.0.0 (Build 8)',
+                            'HabitForge v1.0.0+18',
                             style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                           ),
                         ),
@@ -164,7 +199,7 @@ class ProfileScreen extends ConsumerWidget {
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: (iconColor ?? AppColors.primary).withOpacity(0.1),
+          color: (iconColor ?? AppColors.primary).withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(icon, color: iconColor ?? AppColors.primary),
@@ -200,6 +235,39 @@ class ProfileScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+  void _showReauthMessage(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Security Verification Required'),
+        content: const Text(
+          'For your security, you need to log in again before you can delete your account permanently.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ref.read(authNotifierProvider.notifier).signOut();
+            },
+            child: const Text('Log Out & Re-verify'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _launchUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      debugPrint('Could not launch $url');
+    }
   }
 }
 

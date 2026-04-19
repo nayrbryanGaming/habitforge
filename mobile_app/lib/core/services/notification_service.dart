@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
+import 'package:flutter/foundation.dart';
 import '../constants/app_constants.dart';
+import '../utils/app_logger.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -12,6 +15,10 @@ class NotificationService {
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
+
+  // Stream to listen for notification selections in the UI
+  static final _notificationStreamController = StreamController<String?>.broadcast();
+  static Stream<String?> get onNotificationTap => _notificationStreamController.stream;
 
   Future<void> initialize() async {
     tz.initializeTimeZones();
@@ -33,14 +40,11 @@ class NotificationService {
 
     await _localNotifications.initialize(
       initSettings,
-      onDidReceiveNotificationResponse: _onNotificationTap,
-    );
-
-    // FCM setup
-    await _fcm.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
+      onDidReceiveNotificationResponse: (response) {
+        if (response.payload != null) {
+          _notificationStreamController.add(response.payload);
+        }
+      },
     );
 
     // Create notification channel (Android)
@@ -61,8 +65,20 @@ class NotificationService {
     FirebaseMessaging.onMessageOpenedApp.listen(_handleBackgroundMessage);
   }
 
-  void _onNotificationTap(NotificationResponse response) {
-    // Handle notification tap - navigate to habit
+
+  Future<void> requestPermission() async {
+    // 1. Request FCM Permission (iOS & Android 13+)
+    NotificationSettings settings = await _fcm.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+    } else if (settings.authorizationStatus == AuthorizationStatus.provisional) {
+    } else {
+    }
+
   }
 
   void _handleForegroundMessage(RemoteMessage message) {
@@ -92,7 +108,11 @@ class NotificationService {
   }
 
   void _handleBackgroundMessage(RemoteMessage message) {
-    // Handle background notification tap
+    AppLogger.i('Background Notification Tapped: ${message.data}');
+    final habitId = message.data['habitId'];
+    if (habitId != null) {
+      _notificationStreamController.add(habitId);
+    }
   }
 
   // Schedule daily habit reminder
@@ -117,8 +137,8 @@ class NotificationService {
             AppConstants.notificationChannelId,
             AppConstants.notificationChannelName,
             channelDescription: AppConstants.notificationChannelDesc,
-            importance: Importance.high,
-            priority: Priority.high,
+            importance: Importance.max,
+            priority: Priority.max,
             icon: '@mipmap/ic_launcher',
             styleInformation: BigTextStyleInformation(
               'Don\'t break your streak — complete "$habitTitle" now! 🔥',
@@ -132,7 +152,34 @@ class NotificationService {
         ),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
-      );
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+      ).catchError((e) async {
+        if (e.toString().contains('SecurityException')) {
+          AppLogger.e('Exact alarm failed (SecurityException), falling back to inexact...');
+          await _localNotifications.zonedSchedule(
+            id,
+            '⚡ Time to forge your habit!',
+            'Don\'t break your streak — complete "$habitTitle" now!',
+            _nextInstanceOfDayTime(day, hour, minute),
+            NotificationDetails(
+              android: AndroidNotificationDetails(
+                AppConstants.notificationChannelId,
+                AppConstants.notificationChannelName,
+                channelDescription: AppConstants.notificationChannelDesc,
+                importance: Importance.max,
+                priority: Priority.max,
+                icon: '@mipmap/ic_launcher',
+              ),
+              iOS: const DarwinNotificationDetails(),
+            ),
+            androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+            matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+            uiLocalNotificationDateInterpretation:
+                UILocalNotificationDateInterpretation.absoluteTime,
+          );
+        }
+      });
     }
   }
 
@@ -144,8 +191,8 @@ class NotificationService {
     }
   }
 
-  // Cancel all reminders
-  Future<void> cancelAllReminders() async {
+  // Cancel all notifications
+  Future<void> cancelAllNotifications() async {
     await _localNotifications.cancelAll();
   }
 
@@ -167,6 +214,7 @@ class NotificationService {
     );
 
     // Find next occurrence of the target weekday
+    // weekday indices: 1=Mon, 7=Sun
     while (scheduledDate.weekday != day || scheduledDate.isBefore(now)) {
       scheduledDate = scheduledDate.add(const Duration(days: 1));
     }

@@ -1,6 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:habitforge/features/habit_management/habit_provider.dart';
 import 'package:habitforge/models/habit_model.dart';
 
 void main() {
@@ -8,12 +6,32 @@ void main() {
     test('Filtering today habits based on day of week', () {
       final habits = [
         HabitModel(
-          habitId: '1', userId: 'u1', title: 'Daily', icon: 'I', color: 'C',
-          scheduleType: 'daily', scheduleDays: [1, 2, 3, 4, 5, 6, 7], createdAt: DateTime.now(),
+          habitId: '1',
+          userId: 'u1',
+          title: 'Daily',
+          description: '',
+          icon: 'I',
+          color: 'C',
+          scheduleType: 'daily',
+          scheduleDays: [1, 2, 3, 4, 5, 6, 7],
+          createdAt: DateTime.now(),
+          isActive: true,
+          currentStreak: 0,
+          longestStreak: 0,
         ),
         HabitModel(
-          habitId: '2', userId: 'u1', title: 'Mon/Wed', icon: 'I', color: 'C',
-          scheduleType: 'weekly', scheduleDays: [1, 3], createdAt: DateTime.now(),
+          habitId: '2',
+          userId: 'u1',
+          title: 'Mon/Wed',
+          description: '',
+          icon: 'I',
+          color: 'C',
+          scheduleType: 'weekly',
+          scheduleDays: [1, 3],
+          createdAt: DateTime.now(),
+          isActive: true,
+          currentStreak: 0,
+          longestStreak: 0,
         ),
       ];
 

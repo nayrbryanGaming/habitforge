@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/constants/app_routes.dart';
 import '../core/theme/app_colors.dart';
+import '../core/services/notification_service.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -15,6 +17,7 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
+  bool _privacyAgreed = false;
 
   final List<Map<String, String>> _pages = [
     {
@@ -35,9 +38,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       'icon': '💎',
       'color': '#7C3AED',
     },
+    {
+      'title': 'PROTECT THE FORGE',
+      'description': 'Enable smart reminders to shield your streaks. Don\'t let your discipline cool down.',
+      'icon': '🔔',
+      'color': '#EF4444',
+    },
   ];
 
   void _finish() async {
+    if (_currentPage == _pages.length - 1 && !_privacyAgreed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please agree to the Privacy Policy to continue.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    // Request permission (Permission Priming)
+    await NotificationService().requestPermission();
+
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('onboarding_complete', true);
     if (mounted) {
@@ -58,7 +80,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Color(int.parse(_pages[_currentPage]['color']!.replaceFirst('#', '0xFF'))).withOpacity(0.05),
+                  Color(int.parse(_pages[_currentPage]['color']!.replaceFirst('#', '0xFF'))).withValues(alpha: 0.05),
                   AppColors.backgroundLight,
                 ],
                 begin: Alignment.topCenter,
@@ -85,16 +107,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               width: 200,
                               height: 200,
                               decoration: BoxDecoration(
-                                color: Color(int.parse(page['color']!.replaceFirst('#', '0xFF'))).withOpacity(0.1),
+                                color: Color(int.parse(page['color']!.replaceFirst('#', '0xFF'))).withValues(alpha: 0.1),
                                 shape: BoxShape.circle,
                               ),
                               child: Center(
-                                child: Text(
-                                  page['icon']!,
-                                  style: const TextStyle(fontSize: 80),
+                                child: Icon(
+                                  _getIconData(page['icon']!),
+                                  size: 100,
+                                  color: Color(int.parse(page['color']!.replaceFirst('#', '0xFF'))),
                                 ),
                               ),
-                            ).animate(key: ValueKey(index)).scale(duration: 600.ms, curve: Curves.backOut).shimmer(delay: 800.ms),
+                            ).animate(key: ValueKey(index)).scale(duration: 600.ms, curve: Curves.easeOutBack).shimmer(delay: 800.ms),
                             const SizedBox(height: 60),
                             Text(
                               page['title']!,
@@ -113,6 +136,31 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                   ),
                               textAlign: TextAlign.center,
                             ).animate(key: ValueKey(index)).fadeIn(delay: 400.ms).slideY(begin: 0.2),
+                            if (index == _pages.length - 1) ...[
+                              const SizedBox(height: 32),
+                              Row(
+                                children: [
+                                  Checkbox(
+                                    value: _privacyAgreed,
+                                    activeColor: Color(int.parse(page['color']!.replaceFirst('#', '0xFF'))),
+                                    onChanged: (val) => setState(() => _privacyAgreed = val ?? false),
+                                  ),
+                                  Expanded(
+                                    child: GestureDetector(
+                                      onTap: () => setState(() => _privacyAgreed = !_privacyAgreed),
+                                      child: Text(
+                                        'I agree to the Privacy Policy and Terms of Service',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: AppColors.textSecondary,
+                                          decoration: TextDecoration.underline,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ).animate().fadeIn(delay: 600.ms),
+                            ],
                           ],
                         ),
                       );
@@ -166,13 +214,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             gradient: LinearGradient(
                               colors: [
                                 Color(int.parse(_pages[_currentPage]['color']!.replaceFirst('#', '0xFF'))),
-                                Color(int.parse(_pages[_currentPage]['color']!.replaceFirst('#', '0xFF'))).withOpacity(0.8),
+                                Color(int.parse(_pages[_currentPage]['color']!.replaceFirst('#', '0xFF'))).withValues(alpha: 0.8),
                               ],
                             ),
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: Color(int.parse(_pages[_currentPage]['color']!.replaceFirst('#', '0xFF'))).withOpacity(0.4),
+                                color: Color(int.parse(_pages[_currentPage]['color']!.replaceFirst('#', '0xFF'))).withValues(alpha: 0.4),
                                 blurRadius: 15,
                                 offset: const Offset(0, 6),
                               ),
@@ -194,5 +242,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ],
       ),
     );
+  }
+
+  IconData _getIconData(String key) {
+    switch (key) {
+      case '🔨':
+        return Icons.construction_rounded;
+      case '⚡':
+        return Icons.offline_bolt_rounded;
+      case '💎':
+        return Icons.diamond_rounded;
+      case '🔔':
+        return Icons.notifications_active_rounded;
+      default:
+        return Icons.star_rounded;
+    }
   }
 }

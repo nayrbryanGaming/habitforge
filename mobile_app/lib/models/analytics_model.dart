@@ -7,6 +7,7 @@ class AnalyticsModel {
   final int longestStreak;
   final int totalCompletions;
   final Map<String, double> habitCompletionRates;
+  final String forgeIntensity; // 'Mindful', 'Balanced', 'Aggressive'
   final List<DailyCompletion> weeklyData;
   final List<DailyCompletion> monthlyData;
 
@@ -19,6 +20,7 @@ class AnalyticsModel {
     required this.longestStreak,
     required this.totalCompletions,
     required this.habitCompletionRates,
+    required this.forgeIntensity,
     required this.weeklyData,
     required this.monthlyData,
   });

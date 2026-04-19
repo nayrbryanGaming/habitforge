@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fl_chart/fl_chart.dart';
-import '../../core/theme/app_colors.dart';
-import '../../widgets/skeleton_container.dart';
-import '../authentication/auth_provider.dart';
-import 'analytics_provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../widgets/empty_state_widget.dart';
+import 'package:flutter/services.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
+import '../../core/theme/app_colors.dart';
 import '../../core/services/analytics_service.dart';
 import '../../core/constants/app_routes.dart';
-import 'package:go_router/go_router.dart';
+import '../../widgets/skeleton_container.dart';
+import '../../widgets/empty_state_widget.dart';
+import '../../models/analytics_model.dart';
+import '../authentication/auth_provider.dart';
+import '../habit_management/habit_provider.dart';
+import 'analytics_provider.dart';
+import 'forge_settings_provider.dart';
 
 class AnalyticsScreen extends ConsumerWidget {
   const AnalyticsScreen({super.key});
@@ -26,8 +31,23 @@ class AnalyticsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        title: const Text('Forge Analytics'),
+        title: const Text('FORGE ANALYTICS'),
+        titleTextStyle: GoogleFonts.inter(
+          fontSize: 14,
+          fontWeight: FontWeight.w900,
+          color: AppColors.textPrimary,
+          letterSpacing: 2,
+        ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.share_rounded),
+            onPressed: () {
+              HapticFeedback.mediumImpact();
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: analyticsAsync.when(
         loading: () => const _AnalyticsSkeleton(),
@@ -43,67 +63,17 @@ class AnalyticsScreen extends ConsumerWidget {
             );
           }
           return SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Mastery Progress Card
-                Container(
-                  padding: const EdgeInsets.all(28),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [AppColors.primary, AppColors.primaryDark],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(32),
-                    boxShadow: [
-                      BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 10)),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'WEEKLY MASTERY',
-                                style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 2),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '${(data.weeklyCompletionRate * 100).toInt()}%',
-                                style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
-                              ),
-                            ],
-                          ),
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(20)),
-                            child: const Icon(Icons.bolt_rounded, color: Colors.white, size: 28),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(6),
-                        child: LinearProgressIndicator(
-                          value: data.weeklyCompletionRate,
-                          minHeight: 8,
-                          backgroundColor: Colors.white.withOpacity(0.15),
-                          valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      ),
-                    ],
-                  ),
-                ).animate().scale(duration: 500.ms, curve: Curves.easeOutBack),
+                _buildModernMasteryCard(context, data),
                 const SizedBox(height: 32),
 
                 // Core Stats Grid
-                _buildSectionHeader('CORE METRICS', Icons.analytics_rounded),
+                _buildSectionHeader('CORE METRICS', Icons.auto_awesome_mosaic_rounded),
                 const SizedBox(height: 16),
                 GridView.count(
                   crossAxisCount: 2,
@@ -111,39 +81,35 @@ class AnalyticsScreen extends ConsumerWidget {
                   physics: const NeverScrollableScrollPhysics(),
                   crossAxisSpacing: 16,
                   mainAxisSpacing: 16,
-                  childAspectRatio: 1.5,
+                  childAspectRatio: 1.4,
                   children: [
-                    _buildMetricCard('ACTIVE STREAKS', '${data.activeStreaks}', Icons.local_fire_department, AppColors.streakFire),
-                    _buildMetricCard('TOTAL FORGED', '${data.totalCompletions}', Icons.check_circle, AppColors.success),
-                    _buildMetricCard('HABITS', '${data.totalHabits}', Icons.inventory_2, AppColors.primary),
-                    _buildMetricCard('RECORD', '${data.longestStreak}d', Icons.emoji_events, AppColors.streakGold),
+                    _buildMetricCard('STREAKS', '${data.activeStreaks}', Icons.bolt_rounded, AppColors.accent),
+                    _buildMetricCard('TOTAL', '${data.totalCompletions}', Icons.check_circle_rounded, AppColors.success),
+                    _buildMetricCard('HABITS', '${data.totalHabits}', Icons.layers_rounded, AppColors.primary),
+                    _buildMetricCard('RECORD', '${data.longestStreak}d', Icons.emoji_events_rounded, AppColors.gold),
                   ],
                 ),
                 const SizedBox(height: 40),
 
-                // FORGE AI INSIGHTS
-                _buildSectionHeader('CHIEF ARCHITECT INSIGHTS', Icons.auto_awesome_rounded),
+                // AI INSIGHTS
+                _buildSectionHeader('FORGE MASTER INSIGHTS', Icons.psychology_rounded),
+                const SizedBox(height: 16),
+                _buildIntensitySelector(ref),
                 const SizedBox(height: 16),
                 _buildInsightCard(data),
                 const SizedBox(height: 32),
 
-                // MASTERY BADGES
-                _buildSectionHeader('MASTERY BADGES', Icons.workspace_premium_rounded),
-                const SizedBox(height: 16),
-                _buildBadgesGrid(data),
-                const SizedBox(height: 40),
-
-                // Completion Trend
-                _buildSectionHeader('COMPLETION TREND', Icons.show_chart_rounded),
+                // TREND
+                _buildSectionHeader('WEEKLY PERFORMANCE', Icons.insights_rounded),
                 const SizedBox(height: 16),
                 _buildWeeklyChart(data).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1),
                 const SizedBox(height: 32),
 
-                // Individual Habit Performance
-                _buildSectionHeader('HABIT PERFORMANCE', Icons.list_alt_rounded),
+                // PERFORMANCE LIST
+                _buildSectionHeader('HABIT EFFICIENCY', Icons.auto_graph_rounded),
                 const SizedBox(height: 16),
                 _buildHabitList(ref, userId, data),
-                const SizedBox(height: 40),
+                const SizedBox(height: 80),
               ],
             ),
           );
@@ -152,15 +118,96 @@ class AnalyticsScreen extends ConsumerWidget {
     );
   }
 
+  Widget _buildModernMasteryCard(BuildContext context, AnalyticsModel data) {
+    return Container(
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        gradient: AppColors.forgeGradient,
+        borderRadius: BorderRadius.circular(36),
+        boxShadow: AppColors.premiumShadow,
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'WEEKLY MASTERY',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.5),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 3,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${(data.weeklyCompletionRate * 100).toInt()}%',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 48,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -2,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                ),
+                child: const Icon(Icons.show_chart_rounded, color: Colors.white, size: 32),
+              ),
+            ],
+          ),
+          const SizedBox(height: 32),
+          Stack(
+            children: [
+              Container(
+                height: 12,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+              ),
+              AnimatedContainer(
+                duration: 1.seconds,
+                curve: Curves.easeOutExpo,
+                height: 12,
+                width: (MediaQuery.of(context).size.width - 104) * data.weeklyCompletionRate,
+                decoration: BoxDecoration(
+                  gradient: AppColors.primaryGradient,
+                  borderRadius: BorderRadius.circular(6),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.5),
+                      blurRadius: 15,
+                    ),
+                  ],
+                ),
+              ).animate().shimmer(duration: 2.seconds),
+            ],
+          ),
+        ],
+      ),
+    ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack);
+  }
+
   Widget _buildSectionHeader(String title, IconData icon) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: AppColors.primary),
+        Icon(icon, size: 14, color: AppColors.primary),
         const SizedBox(width: 8),
         Text(
           title,
           style: const TextStyle(
-            fontSize: 11,
+            fontSize: 10,
             fontWeight: FontWeight.w900,
             color: AppColors.textSecondary,
             letterSpacing: 2,
@@ -172,25 +219,31 @@ class AnalyticsScreen extends ConsumerWidget {
 
   Widget _buildMetricCard(String label, String value, IconData icon, Color color) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.border.withOpacity(0.5)),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: AppColors.borderLight.withValues(alpha: 0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(label, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1)),
-              Icon(icon, color: color, size: 16),
-            ],
+          Icon(icon, color: color, size: 20),
+          const SizedBox(height: 12),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -0.5),
           ),
-          const SizedBox(height: 8),
-          Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w900,
+              color: AppColors.textSecondary,
+              letterSpacing: 1,
+            ),
+          ),
         ],
       ),
     );
@@ -198,18 +251,23 @@ class AnalyticsScreen extends ConsumerWidget {
 
   Widget _buildWeeklyChart(AnalyticsModel data) {
     return Container(
-      height: 220,
-      padding: const EdgeInsets.all(20),
+      height: 240,
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.border.withOpacity(0.5)),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: AppColors.borderLight.withValues(alpha: 0.5)),
       ),
       child: BarChart(
         BarChartData(
           alignment: BarChartAlignment.spaceAround,
           maxY: 1.0,
-          barTouchData: BarTouchData(enabled: true),
+          barTouchData: BarTouchData(
+            touchTooltipData: BarTouchTooltipData(
+              getTooltipColor: (_) => AppColors.backgroundDark,
+              tooltipRoundedRadius: 8,
+            ),
+          ),
           titlesData: FlTitlesData(
             show: true,
             bottomTitles: AxisTitles(
@@ -221,8 +279,11 @@ class AnalyticsScreen extends ConsumerWidget {
                   if (index < 0 || index >= data.weeklyData.length) return const SizedBox();
                   final day = days[data.weeklyData[index].date.weekday - 1];
                   return Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
-                    child: Text(day, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
+                    padding: const EdgeInsets.only(top: 10.0),
+                    child: Text(
+                      day,
+                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.textSecondary),
+                    ),
                   );
                 },
               ),
@@ -240,13 +301,13 @@ class AnalyticsScreen extends ConsumerWidget {
               barRods: [
                 BarChartRodData(
                   toY: day.rate,
-                  color: AppColors.primary,
-                  width: 12,
-                  borderRadius: BorderRadius.circular(6),
+                  gradient: AppColors.primaryGradient,
+                  width: 14,
+                  borderRadius: BorderRadius.circular(4),
                   backDrawRodData: BackgroundBarChartRodData(
                     show: true,
                     toY: 1,
-                    color: AppColors.surfaceLight,
+                    color: AppColors.backgroundLight,
                   ),
                 ),
               ],
@@ -264,53 +325,73 @@ class AnalyticsScreen extends ConsumerWidget {
       loading: () => const SizedBox(),
       error: (_, __) => const SizedBox(),
       data: (habits) {
-        if (habits.isEmpty) return const Center(child: Text('No habits yet.'));
-
+        if (habits.isEmpty) return const SizedBox();
         return ListView.separated(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: habits.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          separatorBuilder: (_, __) => const SizedBox(height: 16),
           itemBuilder: (context, index) {
             final habit = habits[index];
             final rate = data.habitCompletionRates[habit.habitId] ?? 0.0;
             final color = Color(int.parse(habit.color.replaceFirst('#', '0xFF')));
 
             return Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.border.withOpacity(0.5)),
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(color: AppColors.borderLight.withValues(alpha: 0.5)),
               ),
               child: Column(
                 children: [
                   Row(
                     children: [
-                      Text(habit.icon, style: const TextStyle(fontSize: 22)),
-                      const SizedBox(width: 12),
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Text(habit.icon, style: const TextStyle(fontSize: 20)),
+                      ),
+                      const SizedBox(width: 16),
                       Expanded(
-                        child: Text(habit.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                        child: Text(
+                          habit.title,
+                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: -0.5),
+                        ),
                       ),
                       Text(
                         '${(rate * 100).toInt()}%',
-                        style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 13),
+                        style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 14),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: rate,
-                      minHeight: 6,
-                      backgroundColor: color.withOpacity(0.1),
-                      valueColor: AlwaysStoppedAnimation<Color>(color),
-                    ),
+                  const SizedBox(height: 16),
+                  Stack(
+                    children: [
+                      Container(
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ),
+                      AnimatedContainer(
+                        duration: 800.ms,
+                        height: 6,
+                        width: (MediaQuery.of(context).size.width - 80) * rate,
+                        decoration: BoxDecoration(
+                          color: color,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ).animate(delay: (index * 50).ms).fadeIn().slideX(begin: 0.05);
+            ).animate(delay: (index * 100).ms).fadeIn().slideY(begin: 0.1);
           },
         );
       },
@@ -320,99 +401,73 @@ class AnalyticsScreen extends ConsumerWidget {
   Widget _buildInsightCard(AnalyticsModel data) {
     final insight = AnalyticsService.getForgeInsight(data);
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(28),
       width: double.infinity,
       decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: AppColors.primary.withOpacity(0.1)),
+        color: AppColors.primary.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
       ),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.psychology_rounded, color: AppColors.primary, size: 32),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'SENSEI ARCHITECT',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.primary,
-                    letterSpacing: 2,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  insight,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    height: 1.6,
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
+          const Icon(Icons.tips_and_updates_rounded, color: AppColors.primary, size: 32),
+          const SizedBox(height: 16),
+          Text(
+            insight,
+            style: GoogleFonts.inter(
+              fontSize: 15,
+              height: 1.6,
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
       ),
-    ).animate().fadeIn(delay: 100.ms).slideX(begin: 0.1);
+    ).animate().fadeIn(delay: 300.ms);
   }
 
-  Widget _buildBadgesGrid(AnalyticsModel data) {
-    final badges = AnalyticsService.calculateMasteryBadges(data);
+  Widget _buildIntensitySelector(WidgetRef ref) {
+    final currentIntensity = ref.watch(forgeSettingsProvider).intensity;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: AppColors.border.withOpacity(0.5)),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.borderLight.withValues(alpha: 0.5)),
       ),
-      child: badges.isEmpty
-          ? const Center(
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 24.0),
-                child: Text('No badges earned yet. Forge ahead!', style: TextStyle(color: AppColors.textSecondary)),
-              ),
-            )
-          : GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                mainAxisSpacing: 16,
-                crossAxisSpacing: 16,
-                childAspectRatio: 0.9,
-              ),
-              itemCount: badges.length,
-              itemBuilder: (context, i) {
-                final badge = badges[i];
-                return Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(child: Text(badge['icon'] as String, style: const TextStyle(fontSize: 28))),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      badge['name'] as String,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ).animate().scale(delay: (i * 100).ms, duration: 400.ms, curve: Curves.backOut);
+      child: Row(
+        children: ['Mindful', 'Balanced', 'Aggressive'].map((level) {
+          final isSelected = currentIntensity == level;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                ref.read(forgeSettingsProvider.notifier).setIntensity(level);
               },
+              child: AnimatedContainer(
+                duration: 200.ms,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: isSelected ? AppColors.primary : Colors.transparent,
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Center(
+                  child: Text(
+                    level.toUpperCase(),
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : AppColors.textSecondary,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 10,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                ),
+              ),
             ),
+          );
+        }).toList(),
+      ),
     );
   }
 }

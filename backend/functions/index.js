@@ -6,41 +6,77 @@ const db = admin.firestore();
 
 // Scheduled function to run every day to trigger reminders
 // In a high-traffic app, this would use FCM batches or Cloud Tasks
-exports.dailyReminderScheduler = functions.pubsub.schedule("0 * * * *") // Runs every hour
+// Scheduled function to run every minute to trigger habit reminders
+// This ensures precision for reminder_time (e.g., 08:30)
+exports.dailyReminderScheduler = functions.pubsub.schedule("* * * * *")
   .timeZone("UTC")
   .onRun(async (context) => {
     const now = new Date();
-    const currentHour = now.getHours().toString().padLeft(2, "0");
-    const currentMinute = now.getMinutes().toString().padLeft(2, "0");
+    // Weekday check: JavaScript 0 is Sunday, 6 is Saturday.
+    // Our app uses 1 (Mon) to 7 (Sun).
+    const currentWeekday = now.getUTCDay() === 0 ? 7 : now.getUTCDay();
+    const currentHour = now.getUTCHours().toString().padStart(2, "0");
+    const currentMinute = now.getUTCMinutes().toString().padStart(2, "0");
     const currentTimeStr = `${currentHour}:${currentMinute}`;
 
-    console.log(`Checking for reminders at ${currentTimeStr}`);
+    console.log(`Checking for reminders at ${currentTimeStr} (Day: ${currentWeekday})`);
 
-    const habitsWithReminders = await db.collection("habits")
+    // Fetch active habits with reminders set for this exact time
+    const habitsSnapshot = await db.collection("habits")
       .where("reminder_time", "==", currentTimeStr)
+      .where("is_active", "==", true)
       .get();
 
-    if (habitsWithReminders.empty) return null;
+    if (habitsSnapshot.empty) return null;
 
     const messages = [];
-    habitsWithReminders.forEach((doc) => {
-      const habit = doc.data();
-      messages.push({
-        token: habit.user_token, // Ideally fetched from user record or habit record
-        notification: {
-          title: "Forge Time! 🔨",
-          body: `Time to work on your habit: ${habit.title}`,
-        },
-        data: {
-          habitId: doc.id,
-          type: "HABIT_REMINDER",
-        },
-      });
-    });
+    const userTokens = new Map();
 
-    // Send messages via FCM (commented out as it requires valid tokens/setup)
-    // await admin.messaging().sendAll(messages);
-    console.log(`Triggered ${messages.length} reminders.`);
+    for (const doc of habitsSnapshot.docs) {
+      const habit = doc.data();
+      
+      // Only remind if habit is scheduled for today
+      const isScheduledToday = habit.schedule_type === "daily" || 
+                               (habit.schedule_days && habit.schedule_days.includes(currentWeekday));
+      
+      if (!isScheduledToday) continue;
+
+      const userId = habit.user_id;
+
+      // Cache user tokens to avoid redundant reads
+      if (!userTokens.has(userId)) {
+        const userDoc = await db.collection("users").doc(userId).get();
+        if (userDoc.exists) {
+          userTokens.set(userId, userDoc.data().fcm_token);
+        }
+      }
+
+      const token = userTokens.get(userId);
+      if (token) {
+        messages.push({
+          token: token,
+          notification: {
+            title: "HabitForge: Forge Time! 🔨",
+            body: `Don't break your streak! Time to work on: ${habit.title}`,
+          },
+          data: {
+            habitId: doc.id,
+            type: "HABIT_REMINDER",
+            click_action: "FLUTTER_NOTIFICATION_CLICK"
+          },
+        });
+      }
+    }
+
+    if (messages.length === 0) return null;
+
+    try {
+      // Send up to 500 messages in one call (Firebase Admin SDK limit)
+      const response = await admin.messaging().sendEach(messages);
+      console.log(`Reminders: Sent ${response.successCount}, Failed ${response.failureCount}`);
+    } catch (error) {
+      console.error("FCM Batch Error:", error);
+    }
     return null;
   });
 

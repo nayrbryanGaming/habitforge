@@ -1,8 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import '../models/habit_model.dart';
-import '../models/habit_log_model.dart';
+import '../../models/habit_model.dart';
+import '../../models/habit_log_model.dart';
 import '../constants/app_constants.dart';
+import 'analytics_service.dart';
+import 'habit_tracking_service.dart';
+import 'package:flutter/material.dart';
+import '../utils/app_logger.dart';
 
 class HabitService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -39,6 +43,7 @@ class HabitService {
     );
 
     await docRef.set(habit.toJson());
+    AnalyticsService.logHabitCreated(habit); // Fire and forget analytics
     return habit;
   }
 
@@ -106,6 +111,7 @@ class HabitService {
       habitId: habitId,
       userId: userId,
       date: date,
+      dateString: dateStr,
       completed: completed,
       completedAt: completed ? DateTime.now() : null,
     );
@@ -120,12 +126,15 @@ class HabitService {
           .doc(logId)
           .set(log.toJson(), SetOptions(merge: true));
 
+      if (completed) {
+        // Log to real Firebase Analytics
+        AnalyticsService.logHabitCompleted(habitId, 'Habit Logged');
+      }
+
       // Update streak
       await _updateStreak(habitId, userId);
     } catch (e) {
-      // If offline, we've already saved locally. 
-      // A sync mechanism could be added for later background sync.
-      debugPrint('Offline: Saved log locally.');
+      AppLogger.i('Offline: Saved log locally.');
     }
   }
 
@@ -261,5 +270,39 @@ class HabitService {
     return snap.docs
         .map((doc) => HabitLogModel.fromJson({'log_id': doc.id, ...doc.data()}))
         .toList();
+  }
+
+  // Seed Default Habits for New Users
+  Future<void> seedDefaultHabits(String userId) async {
+    final defaultHabits = [
+      {
+        'title': 'Morning Sun Exposure',
+        'description': 'View sunlight within 30 mins of waking to set your circadian rhythm.',
+        'icon': '☀️',
+        'color': '#F97316',
+        'scheduleType': 'daily',
+        'scheduleDays': [1, 2, 3, 4, 5, 6, 7],
+      },
+      {
+        'title': 'Deep Hydration',
+        'description': 'Drink 500ml of water immediately upon waking.',
+        'icon': '💧',
+        'color': '#2563EB',
+        'scheduleType': 'daily',
+        'scheduleDays': [1, 2, 3, 4, 5, 6, 7],
+      },
+    ];
+
+    for (final h in defaultHabits) {
+      await createHabit(
+        userId: userId,
+        title: h['title'] as String,
+        description: h['description'] as String,
+        scheduleType: h['scheduleType'] as String,
+        scheduleDays: h['scheduleDays'] as List<int>,
+        icon: h['icon'] as String,
+        color: h['color'] as String,
+      );
+    }
   }
 }

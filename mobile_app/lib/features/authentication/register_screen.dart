@@ -1,7 +1,12 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/utils/app_utils.dart';
 import 'auth_provider.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
@@ -28,7 +33,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   void _register() {
     if (_formKey.currentState!.validate()) {
-      HapticFeedback.lightImpact();
+      HapticFeedback.mediumImpact();
       ref.read(authNotifierProvider.notifier).signUp(
             _emailController.text.trim(),
             _passwordController.text.trim(),
@@ -41,113 +46,186 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authNotifierProvider);
 
+    ref.listen<AsyncValue<void>>(authNotifierProvider, (previous, next) {
+      next.whenOrNull(
+        error: (err, stack) => AppUtils.showSnackBar(context, err.toString(), isError: true),
+      );
+    });
+
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
-      appBar: AppBar(
-        title: const Text('New Architect'),
-        backgroundColor: Colors.transparent,
-      ),
       extendBodyBehindAppBar: true,
-      body: Container(
-        height: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppColors.primary.withOpacity(0.05),
-              AppColors.backgroundLight,
-            ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary),
+          onPressed: () => context.pop(),
         ),
-        child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 32.0),
-              child: Form(
-                key: _formKey,
+      ),
+      body: Stack(
+        children: [
+          // Mesh Gradient Background
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                color: AppColors.backgroundLight,
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.accent.withValues(alpha: 0.1),
+                    AppColors.backgroundLight,
+                    AppColors.primary.withValues(alpha: 0.05),
+                  ],
+                  begin: Alignment.topRight,
+                  end: Alignment.bottomLeft,
+                ),
+              ),
+            ),
+          ),
+          
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 28.0),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    // Illustration or Header Icon
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: const Icon(Icons.architecture_rounded, size: 40, color: AppColors.primary),
+                    ).animate().scale(duration: 500.ms, curve: Curves.easeOutBack),
+
+                    const SizedBox(height: 32),
+
                     Text(
-                      'Join the Forge',
+                      'Become an Architect',
                       style: GoogleFonts.outfit(
-                        fontSize: 32,
+                        fontSize: 34,
                         fontWeight: FontWeight.w900,
                         color: AppColors.textPrimary,
                         letterSpacing: -1,
                       ),
-                      textAlign: TextAlign.center,
-                    ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.1),
+                    ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2),
+
                     const SizedBox(height: 8),
-                    const Text(
-                      'Create an account to start building unbreakable routines.',
-                      style: TextStyle(
-                        fontSize: 15,
+
+                    Text(
+                      'Forge routines that stick. Forever.',
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
                         color: AppColors.textSecondary,
-                        height: 1.5,
+                        fontWeight: FontWeight.w500,
                       ),
-                      textAlign: TextAlign.center,
-                    ).animate().fadeIn(delay: 200.ms),
-                    const SizedBox(height: 40),
-                    _buildTextField(
-                      controller: _nameController,
-                      label: 'Full Name',
-                      icon: Icons.person_outline_rounded,
-                    ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.1),
-                    const SizedBox(height: 16),
-                    _buildTextField(
-                      controller: _emailController,
-                      label: 'Email',
-                      icon: Icons.email_outlined,
-                      keyboardType: TextInputType.emailAddress,
-                    ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.1),
-                    const SizedBox(height: 16),
-                    _buildTextField(
-                      controller: _passwordController,
-                      label: 'Password',
-                      icon: Icons.lock_outline,
-                      obscureText: !_isPasswordVisible,
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _isPasswordVisible
-                              ? Icons.visibility_off_rounded
-                              : Icons.visibility_rounded,
-                          size: 20,
+                    ).animate().fadeIn(delay: 300.ms),
+
+                    const SizedBox(height: 48),
+
+                    // Glassmorphic Card
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(32),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                        child: Container(
+                          padding: const EdgeInsets.all(32),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.7),
+                            borderRadius: BorderRadius.circular(32),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.5),
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Form(
+                            key: _formKey,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                _buildTextField(
+                                  controller: _nameController,
+                                  label: 'Display Name',
+                                  icon: Icons.person_outline_rounded,
+                                ),
+                                const SizedBox(height: 20),
+                                _buildTextField(
+                                  controller: _emailController,
+                                  label: 'Email Address',
+                                  icon: Icons.email_outlined,
+                                  keyboardType: TextInputType.emailAddress,
+                                ),
+                                const SizedBox(height: 20),
+                                _buildTextField(
+                                  controller: _passwordController,
+                                  label: 'Secret Password',
+                                  icon: Icons.lock_outline_rounded,
+                                  obscureText: !_isPasswordVisible,
+                                  suffixIcon: IconButton(
+                                    icon: Icon(
+                                      _isPasswordVisible
+                                          ? Icons.visibility_off_rounded
+                                          : Icons.visibility_rounded,
+                                      size: 18,
+                                    ),
+                                    onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
+                                  ),
+                                ),
+                                const SizedBox(height: 32),
+                                SizedBox(
+                                  height: 60,
+                                  child: ElevatedButton(
+                                    onPressed: authState.isLoading ? null : _register,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.primary,
+                                      foregroundColor: Colors.white,
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(18),
+                                      ),
+                                    ),
+                                    child: authState.isLoading
+                                        ? const SizedBox(
+                                            height: 24,
+                                            width: 24,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                        : const Text(
+                                            'CREATE YOUR FORGE',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w900,
+                                              letterSpacing: 1.2,
+                                            ),
+                                          ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                        onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
                       ),
                     ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.1),
+
                     const SizedBox(height: 32),
-                    ElevatedButton(
-                      onPressed: authState.isLoading ? null : _register,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 18),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                      ),
-                      child: authState.isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text('CREATE ACCOUNT', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
-                    ).animate().fadeIn(delay: 600.ms).scale(),
-                    const SizedBox(height: 24),
+
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text(
-                          'Already have an account?',
-                          style: TextStyle(color: AppColors.textSecondary),
+                        Text(
+                          'Already a member?',
+                          style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
                         ),
                         TextButton(
                           onPressed: () => context.pop(),
-                          child: const Text('Login', style: TextStyle(fontWeight: FontWeight.bold)),
+                          child: const Text(
+                            'Sign In',
+                            style: TextStyle(fontWeight: FontWeight.w900, color: AppColors.primary),
+                          ),
                         ),
                       ],
                     ).animate().fadeIn(delay: 700.ms),
@@ -156,7 +234,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -169,25 +247,48 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     TextInputType? keyboardType,
     Widget? suffixIcon,
   }) {
-    return TextFormField(
-      controller: controller,
-      obscureText: obscureText,
-      keyboardType: keyboardType,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon, size: 20),
-        suffixIcon: suffixIcon,
-        filled: true,
-        fillColor: Colors.white,
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
-          borderSide: BorderSide(color: AppColors.border.withOpacity(0.5)),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label.toUpperCase(),
+          style: GoogleFonts.inter(
+            fontSize: 10,
+            fontWeight: FontWeight.w900,
+            color: AppColors.textSecondary.withValues(alpha: 0.7),
+            letterSpacing: 1,
+          ),
         ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          obscureText: obscureText,
+          keyboardType: keyboardType,
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+          decoration: InputDecoration(
+            prefixIcon: Icon(icon, size: 20, color: AppColors.primary),
+            suffixIcon: suffixIcon,
+            filled: true,
+            fillColor: Colors.white.withValues(alpha: 0.5),
+            contentPadding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(18),
+              borderSide: BorderSide(color: AppColors.border.withValues(alpha: 0.3)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(18),
+              borderSide: const BorderSide(color: AppColors.primary, width: 2),
+            ),
+            errorStyle: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          validator: (val) {
+            if (val == null || val.isEmpty) return 'Required';
+            if (keyboardType == TextInputType.emailAddress && !val.contains('@')) return 'Invalid Email';
+            if (label.contains('Password') && val.length < 6) return 'Too short';
+            return null;
+          },
         ),
-      ),
+      ],
     );
   }
 }

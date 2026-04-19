@@ -3,10 +3,12 @@ import '../../core/services/habit_service.dart';
 import '../../models/analytics_model.dart';
 import '../../models/habit_model.dart';
 import '../../models/habit_log_model.dart';
+import 'forge_settings_provider.dart';
 
 final analyticsProvider =
     FutureProvider.family<AnalyticsModel, String>((ref, userId) async {
   final habitService = HabitService();
+  final settings = ref.watch(forgeSettingsProvider);
 
   // Get all active habits
   final habitsSnap = await habitService.getUserHabits(userId).first;
@@ -45,6 +47,7 @@ final analyticsProvider =
     longestStreak: longestStreak,
     totalCompletions: monthlyLogs.where((l) => l.completed).length,
     habitCompletionRates: habitRates,
+    forgeIntensity: settings.intensity,
     weeklyData: weeklyData,
     monthlyData: monthlyData,
   );
