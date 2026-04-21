@@ -43,7 +43,7 @@ class _MainShellState extends State<MainShell> {
     int getIndex() {
       if (location == AppRoutes.home) return 0;
       if (location == AppRoutes.analytics) return 1;
-      if (location == '/profile') return 2;
+      if (location == AppRoutes.profile) return 2;
       return 0;
     }
 
@@ -81,7 +81,7 @@ class _MainShellState extends State<MainShell> {
               shape: const CircularNotchedRectangle(),
               notchMargin: 10,
               padding: EdgeInsets.zero,
-              child: Container(
+              child: SizedBox(
                 height: 64,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -103,7 +103,7 @@ class _MainShellState extends State<MainShell> {
                       icon: Icons.person_outline_rounded,
                       label: 'Profile',
                       isSelected: getIndex() == 2,
-                      onTap: () => context.go('/profile'),
+                      onTap: () => context.go(AppRoutes.profile),
                     ),
                     _NavButton(
                       icon: Icons.settings_outlined,

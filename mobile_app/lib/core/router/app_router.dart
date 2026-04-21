@@ -85,7 +85,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const AnalyticsScreen(),
           ),
           GoRoute(
-            path: '/profile',
+            path: AppRoutes.profile,
             builder: (context, state) => const ProfileScreen(),
           ),
         ],

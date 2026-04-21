@@ -75,8 +75,11 @@ class NotificationService {
     );
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      AppLogger.i('User granted notification permission.');
     } else if (settings.authorizationStatus == AuthorizationStatus.provisional) {
+      AppLogger.i('User granted provisional notification permission.');
     } else {
+      AppLogger.i('User declined or has not accepted notification permission.');
     }
 
   }

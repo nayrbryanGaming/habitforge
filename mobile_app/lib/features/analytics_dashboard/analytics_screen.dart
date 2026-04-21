@@ -44,6 +44,9 @@ class AnalyticsScreen extends ConsumerWidget {
             icon: const Icon(Icons.share_rounded),
             onPressed: () {
               HapticFeedback.mediumImpact();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Sharing analytics coming soon!')),
+              );
             },
           ),
           const SizedBox(width: 8),
